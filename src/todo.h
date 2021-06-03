@@ -11,9 +11,9 @@
     #define MAX_TAGS 20 // projects or contexts
 #endif // MAX_TAGS
 
-#ifndef MAX_TASKS
-    #define MAX_TASKS 512
-#endif // MAX_TASKS
+#ifndef MAX_TODOS
+    #define MAX_TODOS 512
+#endif // MAX_TODOS
 
 #define DATE_REGEX "\\d\\d\\d\\d-\\d\\d-\\d\\d"
 #define DATE_FMT "%Y-%m-%d"
@@ -70,11 +70,17 @@ typedef struct {
     int n_todos;
 } TodoVect;
 
-
 int todovect_create(TodoVect* t, int n);
 int todovect_release(TodoVect* t);
+
+
+typedef struct {
+    Todo* todos[MAX_TODOS];
+    int n_todos;
+} TodoSlice;
+
 
 int todovect_sort(TodoVect* t, TodoField field);
 int todovect_sort_desc(TodoVect* t, TodoField field);
 
-int todovect_filter(TodoVect* dest, TodoVect* src, const char* pattern);
+TodoSlice todovect_filter(TodoVect* src, const char* pattern);

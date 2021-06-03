@@ -1,10 +1,8 @@
-#define _GNU_SOURCE
 #include <stdlib.h> // for calloc, realloc and free
 
 #include "sort_r.h"
 
 #include "todo.h"
-
 
 
 int todovect_create(TodoVect* t, int n)
@@ -13,7 +11,6 @@ int todovect_create(TodoVect* t, int n)
     t->n_todos = 0;
     return 0;
 }
-
 
 int todovect_release(TodoVect* t)
 {
@@ -33,13 +30,16 @@ int todovect_sort_desc(TodoVect* t, TodoField field)
     return 0;
 }
 
-int todovect_filter(TodoVect* dest, TodoVect* src, const char* pattern)
+TodoSlice todovect_filter(TodoVect* src, const char* pattern)
 {
+    TodoSlice slc;
+    slc.n_todos = 0;
+
     for (int i=0; i<src->n_todos; i++) {
         if (todo_match(&src->todos[i], pattern)) {
-            dest->todos[dest->n_todos++] = src->todos[i];
+            slc.todos[slc.n_todos++] = &src->todos[i];
         }
     }
 
-    return (dest->n_todos > 0) ? 0 : -1;
+    return slc;
 }

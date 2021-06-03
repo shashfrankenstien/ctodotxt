@@ -31,13 +31,13 @@ int main (int argc, char *argv[])
         goto error;
 
     TodoVect todos;
-    todovect_create(&todos, MAX_TASKS);
+    todovect_create(&todos, MAX_TODOS);
 
     read_todo_file(&todos, fp);
     fclose(fp);
 
     // sort test
-    todovect_sort(&todos, DUE_DATE);
+    todovect_sort(&todos, PRIORITY);
     for (int i=0; i<todos.n_todos; i++) {
         printf("%d - %s\n", todos.todos[i].tid, todos.todos[i].raw_todo);
     }
@@ -45,13 +45,11 @@ int main (int argc, char *argv[])
     // filter test
     {
         printf("\n\n");
-        TodoVect todos_filtered;
-        todovect_create(&todos_filtered, todos.n_todos);
-        todovect_filter(&todos_filtered, &todos, "@");
+        TodoSlice todos_filtered = todovect_filter(&todos, "@");
         for (int i=0; i<todos_filtered.n_todos; i++) {
-            printf("%d - %s\n", todos_filtered.todos[i].tid, todos_filtered.todos[i].raw_todo);
+            Todo* t = todos_filtered.todos[i];
+            printf("%d - %s\n", t->tid, t->raw_todo);
         }
-        todovect_release(&todos_filtered);
     }
 
     todovect_release(&todos);
