@@ -2,15 +2,18 @@ APP := todo-txt
 
 CC := gcc
 INCLUDES := -I./src -I./vendor
-CFLAGS := -Wall
+CFLAGS := -Wall -g
 
 
-all: deps
-	$(CC) $(CFLAGS) $(INCLUDES) ./src/*.c ./vendor/*.o -o $(APP)
+all: deps $(APP)
 
 
 deps:
 	@cd vendor && make
+
+
+$(APP): src/*
+	$(CC) $(CFLAGS) $(INCLUDES) ./src/*.c ./vendor/*.o -o $(APP)
 
 
 clean:

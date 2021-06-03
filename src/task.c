@@ -7,7 +7,7 @@
 
 #include "re.h"
 
-#include "task.h"
+#include "todotxt.h"
 
 
 // private functions
@@ -33,7 +33,7 @@ static void constructor(Task* t)
     t->tid = tid++;
 
     t->raw_todo[0] = '\0';
-    t->priority = NO_PRIORITY_CHARACTER;
+    t->priority = NO_PRIORITY;
     t->todo[0] = '\0';
 
     for (int i=0; i<MAX_TAGS; i++) {
@@ -48,7 +48,7 @@ static void constructor(Task* t)
 }
 
 
-int parse_task(Task* t, char* line)
+int task_parse(Task* t, char* line)
 {
 
     char *token;
@@ -101,7 +101,7 @@ int parse_task(Task* t, char* line)
         pri_match = re_match(PRIORITY_KV_REGEX, (const char*)token, &pri_matchlen);
         due_match = re_match(DUEDATE_REGEX, (const char*)token, &due_matchlen);
 
-        if (pri_match > -1 && t->priority == NO_PRIORITY_CHARACTER) {
+        if (pri_match > -1 && t->priority == NO_PRIORITY) {
             t->priority = token[pri_match+pri_matchlen-1]; // last char is priority
         }
         else if (due_match > -1) {
@@ -135,7 +135,8 @@ int parse_task(Task* t, char* line)
 }
 
 
-int rebuild_task(Task* t, char* o)
+
+int task_rebuild(Task* t, char* out)
 {
     int res;
     char buffer[MAX_LINE_LENGTH] = {0};
@@ -153,7 +154,7 @@ int rebuild_task(Task* t, char* o)
             }
         }
     }
-    else if (t->priority != NO_PRIORITY_CHARACTER) {
+    else if (t->priority != NO_PRIORITY) {
         snprintf(&buffer[buf_idx], 5, "(%c) ", t->priority);
         buf_idx += 4;
     }
@@ -179,11 +180,105 @@ int rebuild_task(Task* t, char* o)
         }
     }
 
-    if (t->finished == true && t->priority != NO_PRIORITY_CHARACTER) {
+    if (t->finished == true && t->priority != NO_PRIORITY) {
         snprintf(&buffer[buf_idx], 7, "pri:%c ", t->priority);
         buf_idx += 6;
     }
 
-    strncpy(o, buffer, MAX_LINE_LENGTH);
+    strncpy(out, buffer, MAX_LINE_LENGTH);
     return 0;
+}
+
+
+// comparators
+
+static int date_compare(struct tm* dt1, struct tm* dt2)
+{
+    // test if any of the dates are blank
+    if (dt1->tm_year==0 && dt2->tm_year==0) {
+        return 0;
+    }
+    else if (dt1->tm_year==0) {
+        return -1; // dt1 is lower
+    }
+    else if (dt2->tm_year==0) {
+        return 1; // dt1 is greater
+    }
+
+    int ret = 0;
+
+    ret = dt1->tm_year - dt2->tm_year;
+    if (ret != 0) return ret;
+
+    ret = dt1->tm_mon - dt2->tm_mon;
+    if (ret != 0) return ret;
+
+    ret = dt1->tm_mday - dt2->tm_mday;
+    if (ret != 0) return ret;
+
+    ret = dt1->tm_hour - dt2->tm_hour;
+    if (ret != 0) return ret;
+
+    ret = dt1->tm_min - dt2->tm_min;
+    if (ret != 0) return ret;
+
+    ret = dt1->tm_sec - dt2->tm_sec;
+
+    return ret;
+}
+
+
+int task_cmp_asc(const void* _t, const void* _oth, void* _field)
+{
+    Task* t = (Task*)_t;
+    Task* oth = (Task*)_oth;
+
+    int ret;
+    switch (*(TaskField*)_field)
+    {
+    case ID:
+        ret = t->tid - oth->tid;
+        break;
+
+    case PRIORITY:
+        ret = t->priority - oth->priority;
+        break;
+
+    case FINISHED:
+        ret = t->finished - oth->finished;
+        break;
+
+    case CREATED_DATE:
+        ret = date_compare(&t->created_date, &oth->created_date);
+        break;
+
+    case DUE_DATE:
+        ret = date_compare(&t->due_date, &oth->due_date);
+        break;
+
+    case FINISHED_DATE:
+        ret = date_compare(&t->finished_date, &oth->finished_date);
+        break;
+
+    default:
+        ret = 0;
+        break;
+    }
+
+    return ret;
+}
+
+int task_cmp_desc(const void* _t, const void* _oth, void* _field)
+{
+    return task_cmp_asc(_t, _oth, _field) * -1; // invert comparator
+}
+
+
+// filter
+
+bool task_match(Task* t, const char* pat)
+{
+    int match, matchlen;
+    match = re_match(pat, (const char*)t->todo, &matchlen);
+    return (match > -1);
 }
