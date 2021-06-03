@@ -18,4 +18,8 @@ $(APP): src/*
 
 clean:
 	-rm $(APP)
-	-rm vendor/*.o
+	cd vendor && make clean
+
+
+purge: clean
+	cd vendor && make purge

@@ -45,34 +45,36 @@ typedef struct {
     struct tm created_date;
     struct tm due_date;
     struct tm finished_date;
-} Task;
+} Todo;
 
 
 typedef enum {
     ID, PRIORITY, FINISHED, CREATED_DATE, DUE_DATE, FINISHED_DATE
-} TaskField;
+} TodoField;
 
 
-int task_parse(Task* t, char* line);
-int task_rebuild(Task* t, char* out);
+int todo_parse(Todo* t, char* line);
+int todo_rebuild(Todo* t, char* out);
 
-int task_cmp_asc(const void* t, const void* oth, void* field);
-int task_cmp_desc(const void* t, const void* oth, void* field);
+int todo_cmp_asc(const void* t, const void* oth, void* field);
+int todo_cmp_desc(const void* t, const void* oth, void* field);
 
-bool task_match(Task* t, const char* pat);
+bool todo_match(Todo* t, const char* pat);
+
+
 
 
 
 typedef struct {
-    Task* tasks;
-    int n_tasks;
-} Todotxt;
+    Todo* todos;
+    int n_todos;
+} TodoVect;
 
 
-int todotxt_create(Todotxt* t, int n);
-int todotxt_release(Todotxt* t);
+int todovect_create(TodoVect* t, int n);
+int todovect_release(TodoVect* t);
 
-int todotxt_sort(Todotxt* t, TaskField field);
-int todotxt_sort_desc(Todotxt* t, TaskField field);
+int todovect_sort(TodoVect* t, TodoField field);
+int todovect_sort_desc(TodoVect* t, TodoField field);
 
-int todotxt_filter(Todotxt* dest, Todotxt* src, const char* pattern);
+int todovect_filter(TodoVect* dest, TodoVect* src, const char* pattern);

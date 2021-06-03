@@ -1,19 +1,19 @@
 #include <stdlib.h>
 #include <stdio.h>
 
-#include "todotxt.h"
+#include "todo.h"
 
 
-int read_todo_file(Todotxt* todos, FILE* fp)
+int read_todo_file(TodoVect* todos, FILE* fp)
 {
     char * line = NULL;
     size_t len = 0;
     ssize_t read;
 
     while ((read = getline(&line, &len, fp)) != -1) {
-        Task* t = &todos->tasks[todos->n_tasks];
-        if(task_parse(t, line)==0) { // success!
-            todos->n_tasks++;
+        Todo* t = &todos->todos[todos->n_todos];
+        if(todo_parse(t, line)==0) { // success!
+            todos->n_todos++;
         }
     }
     if (line)
@@ -30,29 +30,31 @@ int main (int argc, char *argv[])
     if (fp == NULL)
         goto error;
 
-    Todotxt todos;
-    todotxt_create(&todos, MAX_TASKS);
+    TodoVect todos;
+    todovect_create(&todos, MAX_TASKS);
 
     read_todo_file(&todos, fp);
     fclose(fp);
 
     // sort test
-    todotxt_sort(&todos, DUE_DATE);
-    for (int i=0; i<todos.n_tasks; i++) {
-        printf("%d - %s\n", todos.tasks[i].tid, todos.tasks[i].raw_todo);
+    todovect_sort(&todos, DUE_DATE);
+    for (int i=0; i<todos.n_todos; i++) {
+        printf("%d - %s\n", todos.todos[i].tid, todos.todos[i].raw_todo);
     }
 
-    printf("\n\n");
-
-    Todotxt todos_filtered;
-    todotxt_create(&todos_filtered, todos.n_tasks);
-    todotxt_filter(&todos_filtered, &todos, "@");
-    for (int i=0; i<todos_filtered.n_tasks; i++) {
-        printf("%d - %s\n", todos_filtered.tasks[i].tid, todos_filtered.tasks[i].raw_todo);
+    // filter test
+    {
+        printf("\n\n");
+        TodoVect todos_filtered;
+        todovect_create(&todos_filtered, todos.n_todos);
+        todovect_filter(&todos_filtered, &todos, "@");
+        for (int i=0; i<todos_filtered.n_todos; i++) {
+            printf("%d - %s\n", todos_filtered.todos[i].tid, todos_filtered.todos[i].raw_todo);
+        }
+        todovect_release(&todos_filtered);
     }
 
-    todotxt_release(&todos);
-    todotxt_release(&todos_filtered);
+    todovect_release(&todos);
     return 0;
 
 error:
