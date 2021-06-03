@@ -12,6 +12,7 @@
 // private functions
 static void constructor(Todo* t);
 static void break_at_new_line(char* l);
+static int read_todo_date(char* str, struct tm* dt);
 
 
 // impl
@@ -22,6 +23,19 @@ static void break_at_new_line(char* l)
             l[i] = '\0';
             break;
         }
+    }
+}
+
+static int read_todo_date(char* str, struct tm* dt)
+{
+    int year, month, day;
+    if (sscanf(str, "%d-%d-%d", &year, &month, &day)==3) {
+        dt->tm_year = year - 1900;
+        dt->tm_mon = month - 1;
+        dt->tm_mday = day;
+        return 0;
+    } else {
+        return -1;
     }
 }
 
@@ -69,7 +83,8 @@ int todo_parse(Todo* t, char* line)
         if (token == NULL) return -1;
         match = re_match(DATE_REGEX, (const char*)token, &matchlen);
         if (match > -1) {
-            strptime((const char*)token, "%Y-%m-%d", &t->finished_date);
+            // strptime((const char*)token, "%Y-%m-%d", &t->finished_date);
+            read_todo_date(token, &t->finished_date);
             token = strtok(NULL, sep);
         }
     }
@@ -86,7 +101,8 @@ int todo_parse(Todo* t, char* line)
     if (token == NULL) return -1;
     match = re_match(DATE_REGEX, (const char*)token, &matchlen);
     if (match > -1) {
-        strptime((const char*)token, DATE_FMT, &t->created_date);
+        // strptime((const char*)token, DATE_FMT, &t->created_date);
+        read_todo_date(token, &t->created_date);
         token = strtok(NULL, sep);
     }
 
@@ -104,7 +120,8 @@ int todo_parse(Todo* t, char* line)
             t->priority = token[pri_match+pri_matchlen-1]; // last char is priority
         }
         else if (due_match > -1) {
-            strptime((const char*)token, DUEDATE_FMT, &t->due_date);
+            read_todo_date(&token[4], &t->due_date);
+            // strptime((const char*)token, DUEDATE_FMT, &t->due_date);
         }
         else {
             int len = strlen(token);

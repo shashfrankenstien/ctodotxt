@@ -4,27 +4,30 @@
 #include "todo.h"
 
 
-int read_todo_file(TodoVect* todos, FILE* fp)
-{
-    char * line = NULL;
-    size_t len = 0;
-    ssize_t read;
+typedef void (*getline_cb_t)(void* data, char* line);
 
-    while ((read = getline(&line, &len, fp)) != -1) {
-        Todo* t = &todos->todos[todos->n_todos];
-        if(todo_parse(t, line)==0) { // success!
-            todos->n_todos++;
-        }
-    }
-    if (line)
-        free(line);
-    return 0;
+void iterlines(FILE* fp, getline_cb_t cb, void* data)
+{
+#if (defined _WIN32 || defined _WIN64 || defined __WINDOWS__)
+	char line[1000];
+	int size = 1000 * sizeof(char);
+	while(fgets(line, size, fp) != NULL) {
+		cb(data, line);
+	}
+#else
+	char *line = (char*) malloc(sizeof(char) * 1000);
+	size_t size = 1000 * sizeof(char);
+	FILE *fp = fopen(file, "r");
+	while(getline(&line, &size, fp) != EOF) {
+		cb(data, line);
+	}
+	free(line);
+#endif
 }
 
 
 int main (int argc, char *argv[])
 {
-
 
     FILE* fp = fopen("todo.txt", "r");
     if (fp == NULL)
@@ -33,7 +36,7 @@ int main (int argc, char *argv[])
     TodoVect todos;
     todovect_create(&todos, MAX_TODOS);
 
-    read_todo_file(&todos, fp);
+    iterlines(fp, todovect_add_cb, &todos);
     fclose(fp);
 
     // sort test
@@ -45,7 +48,7 @@ int main (int argc, char *argv[])
     // filter test
     {
         printf("\n\n");
-        TodoSlice todos_filtered = todovect_filter(&todos, "@");
+        TodoSlice todos_filtered = todovect_filter(&todos, "GC");
         for (int i=0; i<todos_filtered.n_todos; i++) {
             Todo* t = todos_filtered.todos[i];
             printf("%d - %s\n", t->tid, t->raw_todo);

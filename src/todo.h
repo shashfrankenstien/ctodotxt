@@ -73,6 +73,8 @@ typedef struct {
 int todovect_create(TodoVect* t, int n);
 int todovect_release(TodoVect* t);
 
+int todovect_add(TodoVect* t, char* line);
+void todovect_add_cb(void* obj, char* line);
 
 typedef struct {
     Todo* todos[MAX_TODOS];
