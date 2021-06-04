@@ -4,16 +4,13 @@
 #include <stdbool.h>
 
 #ifndef MAX_LINE_LENGTH
-    #define MAX_LINE_LENGTH 512
-#endif // MAX_LINE_LENGTH
+    #define MAX_LINE_LENGTH 256
+#endif
 
 #ifndef MAX_TAGS
-    #define MAX_TAGS 20 // projects or contexts
-#endif // MAX_TAGS
+    #define MAX_TAGS 20 // represents projects or contexts
+#endif
 
-#ifndef MAX_TODOS
-    #define MAX_TODOS 512
-#endif // MAX_TODOS
 
 #define DATE_REGEX "\\d\\d\\d\\d-\\d\\d-\\d\\d"
 #define DATE_FMT "%Y-%m-%d"
@@ -64,25 +61,28 @@ bool todo_match(Todo* t, const char* pat);
 
 
 
-
 typedef struct {
     Todo* todos;
     int n_todos;
-} TodoVect;
+} TodoArray;
 
-int todovect_create(TodoVect* t, int n);
-int todovect_release(TodoVect* t);
-
-int todovect_add(TodoVect* t, char* line);
-void todovect_add_cb(void* obj, char* line);
-
+// slice contains pointers to TodoArray elements
 typedef struct {
-    Todo* todos[MAX_TODOS];
+    Todo** todos;
     int n_todos;
 } TodoSlice;
 
 
-int todovect_sort(TodoVect* t, TodoField field);
-int todovect_sort_desc(TodoVect* t, TodoField field);
+TodoArray todoarray_init();
+int todoarray_release(TodoArray* t);
+int todoslice_release(TodoSlice* t);
 
-TodoSlice todovect_filter(TodoVect* src, const char* pattern);
+
+int todoarray_add(TodoArray* t, char* line);
+void todoarray_add_cb(void* obj, char* line);
+
+
+int todoarray_sort(TodoArray* t, TodoField field);
+int todoarray_sort_desc(TodoArray* t, TodoField field);
+
+TodoSlice todoarray_filter(TodoArray* src, const char* pattern);

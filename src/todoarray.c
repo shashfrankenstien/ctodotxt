@@ -1,4 +1,5 @@
 #include <stdlib.h> // for calloc, realloc and free
+#include <stdio.h>
 
 /* These guards are required for sort_r.h while using TDM-GCC on Windows
 *  Waiting for resolution of issue https://github.com/noporpoise/sort_r/issues/14
@@ -19,21 +20,36 @@
 #include "todo.h"
 
 
-int todovect_create(TodoVect* t, int n)
+#ifndef ARRAY_ALLOC_SIZE
+    #define ARRAY_ALLOC_SIZE 50
+#endif
+
+TodoArray todoarray_init()
 {
-    t->todos = calloc(n, sizeof(Todo));
-    t->n_todos = 0;
-    return 0;
+    TodoArray t;
+    t.todos = calloc(ARRAY_ALLOC_SIZE, sizeof(Todo));
+    t.n_todos = 0;
+    return t;
 }
 
-int todovect_release(TodoVect* t)
+int todoarray_release(TodoArray* t)
 {
     free(t->todos);
     return 0;
 }
 
-int todovect_add(TodoVect* t, char* line)
+int todoslice_release(TodoSlice* t)
 {
+    free(t->todos);
+    return 0;
+}
+
+
+int todoarray_add(TodoArray* t, char* line)
+{
+    if (t->n_todos % ARRAY_ALLOC_SIZE == 0) { // realloc at multiple of ARRAY_ALLOC_SIZE value
+        t->todos = realloc(t->todos, sizeof(Todo) * (t->n_todos + ARRAY_ALLOC_SIZE));
+    }
     int res;
     if((res=todo_parse(&t->todos[t->n_todos], line))==0) { // success!
         t->n_todos++;
@@ -41,27 +57,28 @@ int todovect_add(TodoVect* t, char* line)
     return res;
 }
 
-void todovect_add_cb(void* obj, char* line)
+void todoarray_add_cb(void* obj, char* line)
 {
-    todovect_add((TodoVect*)obj, line);
+    todoarray_add((TodoArray*)obj, line);
 }
 
-int todovect_sort(TodoVect* t, TodoField field)
+int todoarray_sort(TodoArray* t, TodoField field)
 {
     sort_r(t->todos, t->n_todos, sizeof(Todo), todo_cmp_asc, &field);
     return 0;
 }
 
-int todovect_sort_desc(TodoVect* t, TodoField field)
+int todoarray_sort_desc(TodoArray* t, TodoField field)
 {
     sort_r(t->todos, t->n_todos, sizeof(Todo), todo_cmp_desc, &field);
     return 0;
 }
 
-TodoSlice todovect_filter(TodoVect* src, const char* pattern)
+TodoSlice todoarray_filter(TodoArray* src, const char* pattern)
 {
     TodoSlice slc;
     slc.n_todos = 0;
+    slc.todos = calloc(src->n_todos, sizeof(Todo*));
 
     for (int i=0; i<src->n_todos; i++) {
         if (todo_match(&src->todos[i], pattern)) {

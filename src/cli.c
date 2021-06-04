@@ -17,7 +17,6 @@ void iterlines(FILE* fp, getline_cb_t cb, void* data)
 #else
 	char *line = (char*) malloc(sizeof(char) * 1000);
 	size_t size = 1000 * sizeof(char);
-	FILE *fp = fopen(file, "r");
 	while(getline(&line, &size, fp) != EOF) {
 		cb(data, line);
 	}
@@ -33,14 +32,12 @@ int main (int argc, char *argv[])
     if (fp == NULL)
         goto error;
 
-    TodoVect todos;
-    todovect_create(&todos, MAX_TODOS);
-
-    iterlines(fp, todovect_add_cb, &todos);
+    TodoArray todos = todoarray_init();
+    iterlines(fp, todoarray_add_cb, &todos);
     fclose(fp);
 
     // sort test
-    todovect_sort(&todos, PRIORITY);
+    todoarray_sort(&todos, PRIORITY);
     for (int i=0; i<todos.n_todos; i++) {
         printf("%d - %s\n", todos.todos[i].tid, todos.todos[i].raw_todo);
     }
@@ -48,14 +45,15 @@ int main (int argc, char *argv[])
     // filter test
     {
         printf("\n\n");
-        TodoSlice todos_filtered = todovect_filter(&todos, "GC");
-        for (int i=0; i<todos_filtered.n_todos; i++) {
-            Todo* t = todos_filtered.todos[i];
+        TodoSlice slice = todoarray_filter(&todos, "MDOTS");
+        for (int i=0; i<slice.n_todos; i++) {
+            Todo* t = slice.todos[i];
             printf("%d - %s\n", t->tid, t->raw_todo);
         }
+        todoslice_release(&slice);
     }
 
-    todovect_release(&todos);
+    todoarray_release(&todos);
     return 0;
 
 error:
