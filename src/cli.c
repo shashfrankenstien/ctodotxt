@@ -2,9 +2,11 @@
 #include <stdio.h>
 
 #include "todo.h"
+#include "keys.h"
 
 
 typedef void (*getline_cb_t)(void* data, char* line);
+
 
 void iterlines(FILE* fp, getline_cb_t cb, void* data)
 {
@@ -25,9 +27,17 @@ void iterlines(FILE* fp, getline_cb_t cb, void* data)
 }
 
 
+void console_clear_screen() {
+#if (defined _WIN32 || defined _WIN64 || defined __WINDOWS__)
+    system("cls");
+#else
+    system("clear");
+#endif
+}
+
+
 int main (int argc, char *argv[])
 {
-
     FILE* fp = fopen("todo.txt", "r");
     if (fp == NULL)
         goto error;
@@ -35,6 +45,8 @@ int main (int argc, char *argv[])
     TodoArray todos = todoarray_init();
     iterlines(fp, todoarray_add_cb, &todos);
     fclose(fp);
+
+    console_clear_screen();
 
     // sort test
     todoarray_sort(&todos, PRIORITY);
@@ -54,6 +66,11 @@ int main (int argc, char *argv[])
     }
 
     todoarray_release(&todos);
+
+    char ch;
+    while ((ch = readkey())!=27) {
+        printf("%c - %d \n", ch, ch);
+    }
     return 0;
 
 error:
