@@ -67,7 +67,6 @@ int main (int argc, char *argv[])
             printf("%d - %s\n", t->tid, raw_color);
 
             free(raw_color);
-            // printf("%d - %s\n", t->tid, t->raw_todo);
         }
         todoslice_release(&slice);
     }

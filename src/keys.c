@@ -8,9 +8,11 @@
 
 char readkey()
 {
-	char c = getch();
-	if (c==0) {
-		c = getch(); // special chars
+	char c = _getch();
+	if (c==0 || c == -32) {
+		int nbbytes = _kbhit();
+		for (int i=0; i<nbbytes; i++)
+			c = _getch(); // special chars
 	}
 	return c;
 }
