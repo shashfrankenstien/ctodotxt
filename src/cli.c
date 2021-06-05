@@ -74,31 +74,36 @@ int main (int argc, char *argv[])
     todoarray_release(&todos);
 
     char ch;
-    while ((ch = readkey())!=ESCAPE) {
-        switch(ch) {
-            case UP:
-                cursor_mv_up(1);
-                break;
+    bool special;
 
-            case DOWN:
-                cursor_mv_down(1);
-                break;
+    while ((ch = readkey(&special)) != ESCAPE) {
+        if (special) {
+            switch(ch) {
+                case UP:
+                    cursor_mv_up(1);
+                    break;
 
-            case LEFT:
-                cursor_mv_left(1);
-                break;
+                case DOWN:
+                    cursor_mv_down(1);
+                    break;
 
-            case RIGHT:
-                cursor_mv_right(1);
-                break;
+                case LEFT:
+                    cursor_mv_left(1);
+                    break;
 
-            case 'd':
-                console_clear_line();
-                break;
+                case RIGHT:
+                    cursor_mv_right(1);
+                    break;
 
-            default:
-                printf("%c - %d \n", ch, ch);
-                break;
+                case 'd':
+                    console_clear_line();
+                    break;
+
+                default:
+                    break;
+            }
+        } else {
+            printf("def %c - %d \n", ch, ch);
         }
     }
     return 0;

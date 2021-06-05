@@ -6,14 +6,18 @@
 
 #include <conio.h>
 
-char readkey()
+char readkey(bool* special)
 {
+	bool _special = false;
 	char c = _getch();
 	if (c==0 || c == -32) {
-		int nbbytes = _kbhit();
-		for (int i=0; i<nbbytes; i++)
+		int nbbytes = _kbhit(); // check if there are any pending bits
+		for (int i=0; i<nbbytes; i++) {
 			c = _getch(); // special chars
+			_special = true;
+		}
 	}
+	*special = _special;
 	return c;
 }
 
@@ -25,12 +29,12 @@ char readkey()
 
 static struct termios old, new;
 
-static void init_termios(int echo)
+static void init_termios()
 {
 	tcgetattr(0, &old);
 	new = old;
 	new.c_lflag &= ~ICANON;
-	new.c_lflag &= echo ? ECHO : ~ECHO;    /* set echo mode */
+	new.c_lflag &= ~ECHO;    /* set no echo mode */
 	tcsetattr(0, TCSANOW, &new);    /* use these new terminal i/o settings now */
 	setbuf(stdin, NULL);
 }
@@ -43,33 +47,25 @@ static void reset_termios(void)
 
 
 
-/* Read 1 character - echo defines echo mode */
-static char getch_(int echo) {
-	char ch;
-	init_termios(echo);
-	ch = getchar();
+/* Read 1 character */
+char readkey(bool* special)
+{
 
-	if (ch==27) {
+	init_termios();
+	char c = getchar();
+	bool _special = false;
+
+	if (c==27) {
 		int nbbytes;
 		ioctl(0, FIONREAD, &nbbytes); // check if there are any pending bits
-		for (int i=0; i<nbbytes; i++)
-			ch = getchar();
+		for (int i=0; i<nbbytes; i++) {
+			c = getchar(); // special chars
+			_special = true;
+		}
 	}
-
 	reset_termios();
-	return ch;
-}
-
-/* Read 1 character without echo */
-char readkey(void)
-{
-	return getch_(0);
-}
-
-/* Read 1 character with echo */
-char e_readkey(void)
-{
-	return getch_(1);
+	*special = _special;
+	return c;
 }
 
 #endif
