@@ -1,6 +1,8 @@
 #include <stdio.h>
 
-#if (defined _WIN32 || defined _WIN64 || defined __WINDOWS__)
+#include "keys.h"
+
+#if PLATFORM_WIN == 1
 
 #include <conio.h>
 

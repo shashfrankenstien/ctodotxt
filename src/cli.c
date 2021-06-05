@@ -1,7 +1,9 @@
 #include <stdlib.h>
 #include <stdio.h>
+#include <string.h>
 
 #include "todo.h"
+#include "ansiictrl.h"
 #include "keys.h"
 
 
@@ -10,7 +12,7 @@ typedef void (*getline_cb_t)(void* data, char* line);
 
 void iterlines(FILE* fp, getline_cb_t cb, void* data)
 {
-#if (defined _WIN32 || defined _WIN64 || defined __WINDOWS__)
+#if PLATFORM_WIN == 1
 	char line[1000];
 	int size = 1000 * sizeof(char);
 	while(fgets(line, size, fp) != NULL) {
@@ -27,13 +29,6 @@ void iterlines(FILE* fp, getline_cb_t cb, void* data)
 }
 
 
-void console_clear_screen() {
-#if (defined _WIN32 || defined _WIN64 || defined __WINDOWS__)
-    system("cls");
-#else
-    system("clear");
-#endif
-}
 
 
 int main (int argc, char *argv[])
@@ -48,6 +43,12 @@ int main (int argc, char *argv[])
 
     console_clear_screen();
 
+    printf("ANSII codes: %s\n", (supports_ansii()) ? "TRUE" : "FALSE");
+
+    int lines, cols;
+    get_console_size(&lines, &cols);
+    printf("Size: %d x %d\n", cols, lines);
+
     // sort test
     todoarray_sort(&todos, PRIORITY);
     for (int i=0; i<todos.n_todos; i++) {
@@ -60,7 +61,13 @@ int main (int argc, char *argv[])
         TodoSlice slice = todoarray_filter(&todos, "MDOTS");
         for (int i=0; i<slice.n_todos; i++) {
             Todo* t = slice.todos[i];
-            printf("%d - %s\n", t->tid, t->raw_todo);
+
+            char* raw_color = calloc(strlen(t->raw_todo)+strlen(COLORIZE_TMPL), sizeof(char));
+            colorize(raw_color, t->raw_todo, YELLOW, true);
+            printf("%d - %s\n", t->tid, raw_color);
+
+            free(raw_color);
+            // printf("%d - %s\n", t->tid, t->raw_todo);
         }
         todoslice_release(&slice);
     }
@@ -68,8 +75,32 @@ int main (int argc, char *argv[])
     todoarray_release(&todos);
 
     char ch;
-    while ((ch = readkey())!=27) {
-        printf("%c - %d \n", ch, ch);
+    while ((ch = readkey())!=ESCAPE) {
+        switch(ch) {
+            case UP:
+                cursor_mv_up(1);
+                break;
+
+            case DOWN:
+                cursor_mv_down(1);
+                break;
+
+            case LEFT:
+                cursor_mv_left(1);
+                break;
+
+            case RIGHT:
+                cursor_mv_right(1);
+                break;
+
+            case 'd':
+                console_clear_line();
+                break;
+
+            default:
+                printf("%c - %d \n", ch, ch);
+                break;
+        }
     }
     return 0;
 

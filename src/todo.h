@@ -29,7 +29,7 @@
 
 #define CAP_LENGTH(X) MIN(X, MAX_LINE_LENGTH)
 
-
+// single todo
 typedef struct {
     int tid;
     char raw_todo[MAX_LINE_LENGTH];
@@ -60,7 +60,7 @@ bool todo_match(Todo* t, const char* pat);
 
 
 
-
+// todo array
 typedef struct {
     Todo* todos;
     int n_todos;

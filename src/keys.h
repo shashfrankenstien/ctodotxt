@@ -1,7 +1,8 @@
 #pragma once
 
+#include "platform.h"
 
-#if (defined _WIN32 || defined _WIN64 || defined __WINDOWS__)
+#if PLATFORM_WIN == 1
 
 #define LEFT 75
 #define RIGHT 77
