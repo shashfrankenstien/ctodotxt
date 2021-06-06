@@ -61,11 +61,7 @@ int main (int argc, char *argv[])
         for (int i=0; i<slice.n_todos; i++) {
             Todo* t = slice.todos[i];
 
-            char* raw_color = calloc(strlen(t->raw_todo)+strlen(COLORIZE_TMPL), sizeof(char));
-            colorize(raw_color, t->raw_todo, YELLOW, true);
-            printf("%d - %s\n", t->tid, raw_color);
-
-            free(raw_color);
+            printf("%d - %s%s%s%s%s\n", t->tid, COLOR_BOLD, COLOR_YELLOW, COLOR_INVERSE, t->raw_todo, COLOR_RESET);
         }
         todoslice_release(&slice);
     }

@@ -47,26 +47,25 @@
 #endif
 
 
-
 #define supports_ansii() ((getenv("ANSICON") || PLATFORM_WIN==0) ? true : false)
 
 // colors
 
-typedef enum {
-	RED = 31,
-	GREEN = 32,
-	YELLOW = 93, //#33
-	BLUE = 34,
-	PINK = 35,
-	LIGHT_BLUE = 36,
-	WHITE = 37,
-	GRAY = 90,
-	CYAN = 96,
-} ColorCodes;
+#define COLOR_RED "\033[31m"
+#define COLOR_GREEN "\033[32m"
+#define COLOR_YELLOW "\033[93m" //#33
+#define COLOR_BLUE "\033[34m"
+#define COLOR_PINK "\033[35m"
+#define COLOR_LIGHT_BLUE "\033[36m"
+#define COLOR_WHITE "\033[37m"
+#define COLOR_GRAY "\033[90m"
+#define COLOR_CYAN "\033[96m"
 
-#define COLORIZE_TMPL "\033[%d;%dm%s\033[0m"
+#define COLOR_BOLD "\033[1m"
+#define COLOR_INVERSE "\033[7m"
+#define COLOR_BOLD "\033[1m"
 
-int colorize(char* dest, char* src, ColorCodes c, bool bold);
+#define COLOR_RESET "\033[m"
 
 
 // navigation

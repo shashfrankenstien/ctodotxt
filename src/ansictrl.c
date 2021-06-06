@@ -9,14 +9,6 @@
 
 
 
-int colorize(char* dest, char* src, ColorCodes c, bool bold)
-{
-    int _bold = (bold==true) ? 1 : 0;
-    return snprintf(dest, strlen(src)+strlen(COLORIZE_TMPL), COLORIZE_TMPL, c, _bold, src);
-}
-
-
-
 // platform specific 'readkey' and 'get_console_size' definitions
 
 #if PLATFORM_WIN == 1
