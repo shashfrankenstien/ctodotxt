@@ -4,7 +4,6 @@
 
 #include "todo.h"
 #include "ansictrl.h"
-#include "keys.h"
 
 
 typedef void (*getline_cb_t)(void* data, char* line);
@@ -95,15 +94,21 @@ int main (int argc, char *argv[])
                     cursor_mv_right(1);
                     break;
 
+                default:
+                    break;
+            }
+        } else {
+
+            switch(ch) {
+
                 case 'd':
                     console_clear_line();
                     break;
 
                 default:
+                    printf("def %c - %d \n", ch, ch);
                     break;
             }
-        } else {
-            printf("def %c - %d \n", ch, ch);
         }
     }
     return 0;
