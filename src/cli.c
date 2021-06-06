@@ -3,6 +3,7 @@
 #include <string.h>
 
 #include "todo.h"
+#include "todoui.h"
 #include "ansictrl.h"
 
 
@@ -40,33 +41,25 @@ int main (int argc, char *argv[])
     iterlines(fp, todoarray_add_cb, &todos);
     fclose(fp);
 
-    console_clear_screen();
-
-    printf("ANSII codes: %s\n", (supports_ansii()) ? "TRUE" : "FALSE");
-
-    int lines, cols;
-    get_console_size(&lines, &cols);
-    printf("Size: %d x %d\n", cols, lines);
 
     // sort test
-    todoarray_sort(&todos, PRIORITY);
-    for (int i=0; i<todos.n_todos; i++) {
-        printf("%d - %s\n", todos.todos[i].tid, todos.todos[i].raw_todo);
-    }
+    // todoarray_sort(&todos, FINISHED);
 
-    // filter test
-    {
-        printf("\n\n");
-        TodoSlice slice = todoarray_filter(&todos, "MDOTS");
-        for (int i=0; i<slice.n_todos; i++) {
-            Todo* t = slice.todos[i];
+    TodoUI ui = todoui_init(&todos);
 
-            printf("%d - %s%s%s%s%s\n", t->tid, COLOR_BOLD, COLOR_YELLOW, COLOR_INVERSE, t->raw_todo, COLOR_RESET);
-        }
-        todoslice_release(&slice);
-    }
+    // // filter test
+    // {
+    //     printf("\n\n");
+    //     TodoSlice slice = todoarray_filter(&todos, "MDOTS");
+    //     for (int i=0; i<slice.n_todos; i++) {
+    //         Todo* t = slice.todos[i];
 
-    todoarray_release(&todos);
+    //         printf("%d - %s%s%s%s%s\n", t->tid, COLOR_BOLD, COLOR_YELLOW, COLOR_INVERSE, t->raw_todo, COLOR_RESET);
+    //     }
+    //     todoslice_release(&slice);
+    // }
+
+    todoui_draw(&ui);
 
     char ch;
     bool special;
@@ -75,20 +68,20 @@ int main (int argc, char *argv[])
         if (special) {
             switch(ch) {
                 case UP:
-                    cursor_mv_up(1);
+                    todoui_mv_up(&ui, 1);
                     break;
 
                 case DOWN:
-                    cursor_mv_down(1);
+                    todoui_mv_down(&ui, 1);
                     break;
 
-                case LEFT:
-                    cursor_mv_left(1);
-                    break;
+                // case LEFT:
+                //     cursor_mv_left(1);
+                //     break;
 
-                case RIGHT:
-                    cursor_mv_right(1);
-                    break;
+                // case RIGHT:
+                //     cursor_mv_right(1);
+                //     break;
 
                 default:
                     break;
@@ -96,17 +89,27 @@ int main (int argc, char *argv[])
         } else {
 
             switch(ch) {
+                case ENTER:
+                    todoui_draw(&ui);
+                    break;
 
-                case 'd':
-                    console_clear_line();
+                case 'f':
+                    todoarray_sort(&todos, FINISHED);
+                    todoui_draw(&ui);
+                    break;
+
+                case 'c':
+                    todoarray_sort(&todos, CREATED_DATE);
+                    todoui_draw(&ui);
                     break;
 
                 default:
-                    printf("def %c - %d \n", ch, ch);
+                    printf("def %c - %d", ch, ch);
                     break;
             }
         }
     }
+    todoarray_release(&todos);
     return 0;
 
 error:

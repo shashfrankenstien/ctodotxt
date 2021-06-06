@@ -1,5 +1,6 @@
 #pragma once
 
+#include <stdlib.h> // for getenv
 #include <stdbool.h>
 
 #if (defined _WIN32 || defined _WIN64 || defined __WINDOWS__)
