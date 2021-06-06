@@ -63,15 +63,17 @@
 #define COLOR_CYAN "\033[96m"
 
 #define COLOR_BOLD "\033[1m"
+#define COLOR_NORMAL "\033[0m"
 #define COLOR_INVERSE "\033[7m"
-#define COLOR_BOLD "\033[1m"
 
 #define COLOR_RESET "\033[m"
 
 
 // navigation
 
-#define CLEAR_LINE_CODE "\033[K"
+#define CLEAR_EOL_CODE "\033[K" // Erase from cursor to end of line
+#define CLEAR_SOL_CODE "\033[1K" // Erase from start of line to cursor
+#define CLEAR_LINE_CODE "\033[2K" // Erase whole line
 #define CLEAR_SCREEN_CODE "\033[2J"
 
 #define CURSOR_POSITION_TMPL "\033[%d;%dH"
@@ -85,6 +87,8 @@ int get_console_size(int* lines, int* cols);
 
 void console_clear_screen();
 void console_clear_line();
+void console_clear_eol();
+void console_clear_sol();
 
 void cursor_position(int l, int c);
 void cursor_mv_up(int n);

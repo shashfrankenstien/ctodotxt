@@ -69,11 +69,11 @@ int main (int argc, char *argv[])
         if (special) {
             switch(ch) {
                 case UP:
-                    todoui_mv_up(&ui, 1);
+                    todoui_vc_up(&ui, 1);
                     break;
 
                 case DOWN:
-                    todoui_mv_down(&ui, 1);
+                    todoui_vc_down(&ui, 1);
                     break;
 
                 // case LEFT:

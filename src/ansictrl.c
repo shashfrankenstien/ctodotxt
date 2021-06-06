@@ -120,8 +120,17 @@ void console_clear_screen()
         #endif
     }
 }
+void console_clear_eol() // Erase from cursor to end of line
+{
+    printf(CLEAR_EOL_CODE);
+}
 
-void console_clear_line()
+void console_clear_sol() // Erase from start of line to cursor
+{
+    printf(CLEAR_SOL_CODE);
+}
+
+void console_clear_line() // Erase whole line
 {
     printf(CLEAR_LINE_CODE);
 }

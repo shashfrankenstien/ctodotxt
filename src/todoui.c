@@ -66,6 +66,8 @@ static void print_header(TodoUI* u)
 
 static void print_footer_left(TodoUI* u, const char* fmt, ...)
 {
+    cursor_position(FOOTER_LINE, u->minpos.col + (u->maxpos.col / 2));
+    console_clear_sol();
     cursor_position(FOOTER_LINE, u->minpos.col);
     printf(COLOR_YELLOW);
     va_list arg;
@@ -77,21 +79,28 @@ static void print_footer_left(TodoUI* u, const char* fmt, ...)
 
 static void print_footer_right(TodoUI* u, const char* fmt, ...)
 {
+    cursor_position(FOOTER_LINE, u->minpos.col + (u->maxpos.col / 2));
+    console_clear_eol();
+
     va_list arg;
     char msg[100]; // arbitrary size to cover most cases
     va_start(arg, fmt);
-    vsprintf(msg, fmt, arg);
+    vsnprintf(msg, 100, fmt, arg);
     va_end(arg);
     // int col = (u->maxpos.col - u->minpos.col - strlen(u->title)) / 2; // centered
     int rhs_col = u->maxpos.col - strlen(msg);
-    cursor_position(FOOTER_LINE, rhs_col-5);
-    console_clear_line();
     cursor_position(FOOTER_LINE, rhs_col);
     printf(COLOR_YELLOW);
     printf("%s", msg);
     printf(COLOR_RESET);
 }
 
+static void print_default_footer(TodoUI* u)
+{
+    int cur_idx = u->vcpos.line+u->scroll_state;
+    print_footer_left(u, "%s", u->todos->todos[cur_idx].todo);
+    print_footer_right(u, "%d/%d", cur_idx+1, u->todos->n_todos);
+}
 
 
 TodoUI todoui_init(TodoArray* t, char* title, char* todopath)
@@ -126,14 +135,13 @@ int todoui_draw(TodoUI* u)
     }
 
     draw_line(u, FOOTER_LINE-1);
-    print_footer_left(u, "%s", "mode:default");
-    print_footer_right(u, "%d/%d", u->vcpos.line+u->scroll_state+1, u->todos->n_todos);
+    print_default_footer(u);
     cursor_position(u->cpos.line, u->cpos.col);
     return 0;
 }
 
 
-int todoui_mv_up(TodoUI* u, int n)
+int todoui_vc_up(TodoUI* u, int n)
 {
     // check if scroll is required
     if (u->vcpos.line-n < 0 && u->scroll_state > 0) {
@@ -149,12 +157,12 @@ int todoui_mv_up(TodoUI* u, int n)
         print_todo(u, u->vcpos.line+u->scroll_state);
     }
 
-    print_footer_right(u, "%d/%d", u->vcpos.line+u->scroll_state+1, u->todos->n_todos);
+    print_default_footer(u);
     cursor_position(u->cpos.line, u->cpos.col);
     return 0;
 }
 
-int todoui_mv_down(TodoUI* u, int n)
+int todoui_vc_down(TodoUI* u, int n)
 {
     // check if scroll is required
     if (u->vcpos.line+n >= PAGE_SIZE && u->todos->n_todos > (u->scroll_state+PAGE_SIZE)) {
@@ -171,7 +179,7 @@ int todoui_mv_down(TodoUI* u, int n)
 
     }
 
-    print_footer_right(u, "%d/%d", u->vcpos.line+u->scroll_state+1, u->todos->n_todos);
+    print_default_footer(u);
     cursor_position(u->cpos.line, u->cpos.col);
     return 0;
 }
