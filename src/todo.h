@@ -26,6 +26,7 @@
 #define NO_PRIORITY '^' // works better than '\0' for sorting
 
 #define MIN(X, Y) (((X) < (Y)) ? (X) : (Y))
+#define MAX(X, Y) (((X) > (Y)) ? (X) : (Y))
 
 #define CAP_LENGTH(X) MIN(X, MAX_LINE_LENGTH)
 

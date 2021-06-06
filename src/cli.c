@@ -45,7 +45,7 @@ int main (int argc, char *argv[])
     // sort test
     // todoarray_sort(&todos, FINISHED);
 
-    TodoUI ui = todoui_init(&todos);
+    TodoUI ui = todoui_init(&todos, argv[0]);
 
     // // filter test
     // {
@@ -103,12 +103,18 @@ int main (int argc, char *argv[])
                     todoui_draw(&ui);
                     break;
 
+                case 'p':
+                    todoarray_sort(&todos, PRIORITY);
+                    todoui_draw(&ui);
+                    break;
+
                 default:
-                    printf("def %c - %d", ch, ch);
+                    putchar(ch);
                     break;
             }
         }
     }
+    printf("\nExit!\n");
     todoarray_release(&todos);
     return 0;
 
