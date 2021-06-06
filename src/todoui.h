@@ -10,6 +10,7 @@ struct curpos {
 
 typedef struct {
     char* title;
+    char* todopath;
     TodoArray* todos;
     struct curpos cpos; // command cursor position
     struct curpos vcpos; // virtual cursor position (0 indexed)
@@ -20,7 +21,7 @@ typedef struct {
 
 
 
-TodoUI todoui_init(TodoArray* t, char* title);
+TodoUI todoui_init(TodoArray* t, char* title, char* todopath);
 int todoui_draw(TodoUI* u);
 int todoui_mv_up(TodoUI* u, int n);
 int todoui_mv_down(TodoUI* u, int n);

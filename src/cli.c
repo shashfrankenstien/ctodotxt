@@ -33,6 +33,7 @@ void iterlines(FILE* fp, getline_cb_t cb, void* data)
 
 int main (int argc, char *argv[])
 {
+    char* filename = "todo.txt";
     FILE* fp = fopen("todo.txt", "r");
     if (fp == NULL)
         goto error;
@@ -45,7 +46,7 @@ int main (int argc, char *argv[])
     // sort test
     // todoarray_sort(&todos, FINISHED);
 
-    TodoUI ui = todoui_init(&todos, argv[0]);
+    TodoUI ui = todoui_init(&todos, argv[0], filename);
 
     // // filter test
     // {
@@ -105,6 +106,16 @@ int main (int argc, char *argv[])
 
                 case 'p':
                     todoarray_sort(&todos, PRIORITY);
+                    todoui_draw(&ui);
+                    break;
+
+                case 'd':
+                    todoarray_sort(&todos, DUE_DATE);
+                    todoui_draw(&ui);
+                    break;
+
+                case 'i':
+                    todoarray_sort(&todos, ID);
                     todoui_draw(&ui);
                     break;
 
