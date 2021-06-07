@@ -13,6 +13,7 @@
 #define HEADER_LINE 2
 #define FOOTER_LINE TOP_OFFSET+PAGE_SIZE+1
 
+#define H_LINE_CHAR "\u2500"
 
 static void print_todo(TodoUI* u, int todo_idx)
 {
@@ -43,10 +44,9 @@ static void print_todo(TodoUI* u, int todo_idx)
 static void draw_line(TodoUI* u, int on_line)
 {
     cursor_position(on_line, u->minpos.col);
-    char c = '-';
     printf(COLOR_GRAY);
     for (int i = u->minpos.col; i < u->maxpos.col; i ++) {
-        putchar(c);
+        printf(H_LINE_CHAR);
     }
     printf(COLOR_RESET);
 }

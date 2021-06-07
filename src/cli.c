@@ -34,7 +34,7 @@ void iterlines(FILE* fp, getline_cb_t cb, void* data)
 int main (int argc, char *argv[])
 {
     char* filename = "todo.txt";
-    FILE* fp = fopen("todo.txt", "r");
+    FILE* fp = fopen(filename, "r");
     if (fp == NULL)
         goto error;
 
