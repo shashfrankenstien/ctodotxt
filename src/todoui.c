@@ -13,7 +13,11 @@
 #define HEADER_LINE 2
 #define FOOTER_LINE TOP_OFFSET+PAGE_SIZE+1
 
-#define H_LINE_CHAR "\u2500"
+#if PLATFORM_WIN == 1
+    #define H_LINE_CHAR "_"
+#else
+    #define H_LINE_CHAR "\u2500"
+#endif
 
 static void print_todo(TodoUI* u, int todo_idx)
 {
