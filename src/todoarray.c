@@ -1,23 +1,24 @@
 #include <stdlib.h> // for calloc, realloc and free
 #include <stdio.h>
 
-/* These guards are required for sort_r.h while using TDM-GCC on Windows
-*  Waiting for resolution of issue https://github.com/noporpoise/sort_r/issues/14
-*/
-#ifdef __MINGW32__
-    #define __REMOVED__MINGW32__
-    #undef __MINGW32__
-#endif
+// /* These guards are required for sort_r.h while using TDM-GCC on Windows
+// *  Waiting for resolution of issue https://github.com/noporpoise/sort_r/issues/14
+// */
+// #ifdef __MINGW32__
+//     #define __REMOVED__MINGW32__
+//     #undef __MINGW32__
+// #endif
 
-#include "sort_r.h"
+// #include "sort_r.h"
 
-#ifdef __REMOVED__MINGW32__
-    #define __MINGW32__ 1
-    #undef __REMOVED__MINGW32__
-#endif
+// #ifdef __REMOVED__MINGW32__
+//     #define __MINGW32__ 1
+//     #undef __REMOVED__MINGW32__
+// #endif
 
 
 #include "todo.h"
+#include "mergesort.h"
 
 
 #ifndef ARRAY_ALLOC_SIZE
@@ -64,13 +65,13 @@ void todoarray_add_cb(void* obj, char* line)
 
 int todoarray_sort(TodoArray* t, TodoField field)
 {
-    sort_r(t->todos, t->n_todos, sizeof(Todo), todo_cmp_asc, &field);
+    msort_r(t->todos, t->n_todos, sizeof(Todo), todo_cmp_asc, &field);
     return 0;
 }
 
 int todoarray_sort_desc(TodoArray* t, TodoField field)
 {
-    sort_r(t->todos, t->n_todos, sizeof(Todo), todo_cmp_desc, &field);
+    msort_r(t->todos, t->n_todos, sizeof(Todo), todo_cmp_desc, &field);
     return 0;
 }
 

@@ -30,6 +30,7 @@
 
 #define CAP_LENGTH(X) MIN(X, MAX_LINE_LENGTH)
 
+
 // single todo
 typedef struct {
     int tid;
