@@ -95,7 +95,7 @@ int main (int argc, char *argv[])
                     break;
 
                 case 'f':
-                    todoarray_sort(&todos, FINISHED);
+                    todoarray_sort(&todos, FINISHED_DATE);
                     todoui_draw(&ui);
                     break;
 

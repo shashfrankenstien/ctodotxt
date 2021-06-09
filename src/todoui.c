@@ -15,9 +15,23 @@
 
 #if PLATFORM_WIN == 1
     #define H_LINE_CHAR "_"
+    #define V_LINE_CHAR "|"
 #else
     #define H_LINE_CHAR "\u2500"
+    #define V_LINE_CHAR "\u2502"
 #endif
+
+
+static void fmt_date_std(char* buf, const int size, struct tm* dt) {
+    if (dt->tm_year==0) {
+        for (int i=0; i<size; i++)
+            buf[i] = ' ';
+        buf[10] = '\0';
+    }
+    else
+        strftime(buf, size, "%m/%d/%Y", dt);
+}
+
 
 static void print_todo(TodoUI* u, int todo_idx)
 {
@@ -37,12 +51,32 @@ static void print_todo(TodoUI* u, int todo_idx)
             break;
     }
 
-    if (u->vcpos.line + u->scroll_state == todo_idx) {
-        printf("%s%s%s%d - %s%s\n", color_cd, COLOR_BOLD, COLOR_INVERSE, t->tid, t->raw_todo, COLOR_RESET);
-    }
-    else {
-        printf("%s%d - %s%s\n", color_cd, t->tid, t->raw_todo, COLOR_RESET);
-    }
+    printf("%s %3d"V_LINE_CHAR"%s", COLOR_GRAY, t->tid, COLOR_RESET);
+    if (u->vcpos.line + u->scroll_state == todo_idx)
+        printf("%s"COLOR_BOLD COLOR_INVERSE, color_cd);
+    else
+        printf("%s", color_cd);
+
+    char created_dt[11];
+    fmt_date_std(created_dt, 11, &t->created_date);
+
+    char fin_dt[11];
+    fmt_date_std(fin_dt, 11, &t->finished_date);
+
+    char due_dt[11];
+    fmt_date_std(due_dt, 11, &t->due_date);
+
+    char pri[4] = "   ";
+    if (t->priority!=NO_PRIORITY)
+        snprintf(pri, 4, "(%c)", t->priority);
+
+    int note_width = (u->maxpos.col - u->minpos.col)/ 2;
+    printf("%c %s %s %s "V_LINE_CHAR"%-*.*s %-10.10s %s%s\n",
+        t->finished ? 'x' : ' ',
+        pri, created_dt, fin_dt,
+        note_width, note_width, t->todo,
+        t->contexts[0], due_dt,
+        COLOR_RESET);
 }
 
 static void draw_line(TodoUI* u, int on_line)
@@ -109,10 +143,6 @@ static void print_default_footer(TodoUI* u)
 
 TodoUI todoui_init(TodoArray* t, char* title, char* todopath)
 {
-    int lines, cols;
-    get_console_size(&lines, &cols);
-    // printf("ANSII codes: %s\n", (supports_ansii()) ? "TRUE" : "FALSE");
-    // printf("Size: %d x %d\n", cols, lines);
 
     return (TodoUI){
         .title = title,
@@ -121,7 +151,7 @@ TodoUI todoui_init(TodoArray* t, char* title, char* todopath)
         .cpos=(struct curpos){1,FOOTER_LINE+1},
         .vcpos=(struct curpos){0,0},
         .minpos=(struct curpos){1,1},
-        .maxpos=(struct curpos){cols,lines},
+        // .maxpos=(struct curpos){cols,lines},
         .scroll_state = 0
     };
 }
@@ -129,6 +159,11 @@ TodoUI todoui_init(TodoArray* t, char* title, char* todopath)
 
 int todoui_draw(TodoUI* u)
 {
+    int lines, cols;
+    get_console_size(&lines, &cols);
+    u->maxpos.line = lines;
+    u->maxpos.col = cols;
+
     console_clear_screen();
     print_header(u);
     draw_line(u, TOP_OFFSET-1);
