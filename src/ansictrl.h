@@ -65,6 +65,7 @@
 
 #define COLOR_NORMAL "\033[22m"
 #define COLOR_BOLD "\033[1m"
+#define COLOR_UNDERLINED "\033[4m"
 #define COLOR_STRIKE "\033[9m"
 #define COLOR_INVERSE "\033[7m"
 

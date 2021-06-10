@@ -7,11 +7,13 @@
 #include "ansictrl.h"
 
 
-#define TOP_OFFSET 5 // includes 3 lines for the title and 1 line for column header and 1 line for border
+#define TOP_OFFSET 5 // includes 3 lines for the title, 1 blank line and 1 line for column header
 #define PAGE_SIZE 15 // number of todos to display on screen
 
 #define HEADER_LINE 2
 #define FOOTER_LINE TOP_OFFSET+PAGE_SIZE+1
+
+#define NOTE_WIDTH_FACTOR  1/2.2
 
 #if PLATFORM_WIN == 1
     #define H_LINE_CHAR "_"
@@ -44,9 +46,9 @@ static void fmt_due_date(char* buf, const int size, struct tm* dt) {
             snprintf(buf, size, "%d days ago", abs(days));
         else if (hours < -23)
             snprintf(buf, size, "yesterday");
-        else if (hours < 0)
+        else if (hours <= 0)
             snprintf(buf, size, "today");
-        else if (hours < 23)
+        else if (hours <= 23)
             snprintf(buf, size, "tomorrow");
         else
             snprintf(buf, size, "in %d days", days);
@@ -100,7 +102,7 @@ static void print_todo(TodoUI* u, int todo_idx)
     if (t->priority!=NO_PRIORITY)
         snprintf(pri, 4, "(%c)", t->priority);
 
-    int note_width = (u->maxpos.col - u->minpos.col)/ 2.2;
+    int note_width = (u->maxpos.col - u->minpos.col) * NOTE_WIDTH_FACTOR;
 
     char* todo_copy = calloc(note_width, sizeof(char));
     strncpy(todo_copy, t->todo, note_width);
@@ -110,12 +112,12 @@ static void print_todo(TodoUI* u, int todo_idx)
             todo_copy[note_width-i] = '.';
     }
 
-    printf(" %c %s %s %s "V_LINE_CHAR"%-*.*s %-12.12s %-15.15s%s\n",
+    printf(" %c %s %s %s "V_LINE_CHAR" %-*.*s"V_LINE_CHAR" %-12.12s %-15.15s"COLOR_RESET COLOR_GRAY V_LINE_CHAR COLOR_RESET"\n",
         t->finished ? 'x' : ' ',
         pri, created_dt, fin_dt,
         note_width, note_width, todo_copy,
-        t->contexts[0], due_dt,
-        COLOR_RESET);
+        t->contexts[0], due_dt
+    );
 
     free(todo_copy);
 }
@@ -143,6 +145,23 @@ static void print_header(TodoUI* u)
     cursor_position(HEADER_LINE, rhs_col);
     printf("%s", u->todopath);
     printf(COLOR_RESET);
+}
+
+static void print_columns_names(TodoUI* u)
+{
+    cursor_position(TOP_OFFSET-1, u->minpos.col+5); // position cursor past the index column
+    int note_width = (u->maxpos.col - u->minpos.col) * NOTE_WIDTH_FACTOR;
+    printf(
+        COLOR_UNDERLINED
+        COLOR_GRAY
+        " F  P  %-10s %-10s   %-*s  %-12s %-15s"
+        COLOR_RESET, // fmt ends
+        "created",
+        "finished",
+        note_width, "todo",
+        "context",
+        "due"
+    );
 }
 
 
@@ -189,7 +208,6 @@ static void print_default_footer(TodoUI* u)
 
 TodoUI todoui_init(TodoArray* t, char* title, char* todopath)
 {
-
     return (TodoUI){
         .title = title,
         .todopath = todopath,
@@ -212,7 +230,7 @@ int todoui_draw(TodoUI* u)
 
     console_clear_screen();
     print_header(u);
-    draw_line(u, TOP_OFFSET-1);
+    print_columns_names(u);
     cursor_position(TOP_OFFSET, u->minpos.col);
 
     for (int i=u->scroll_state; i<MIN(u->todos->n_todos, PAGE_SIZE+u->scroll_state); i++) {
