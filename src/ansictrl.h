@@ -59,14 +59,16 @@
 #define COLOR_PINK "\033[35m"
 #define COLOR_LIGHT_BLUE "\033[36m"
 #define COLOR_WHITE "\033[37m"
-#define COLOR_GRAY "\033[90m"
 #define COLOR_CYAN "\033[96m"
+#define COLOR_GRAY "\033[90m"
+#define COLOR_LIGHT_GRAY "\033[38;2;220;220;220m" // RGB color
 
+#define COLOR_NORMAL "\033[22m"
 #define COLOR_BOLD "\033[1m"
-#define COLOR_NORMAL "\033[0m"
+#define COLOR_STRIKE "\033[9m"
 #define COLOR_INVERSE "\033[7m"
 
-#define COLOR_RESET "\033[m"
+#define COLOR_RESET "\033[0m"
 
 
 // navigation

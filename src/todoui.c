@@ -7,8 +7,8 @@
 #include "ansictrl.h"
 
 
-#define TOP_OFFSET 4 // includes 3 lines for the title and 1 line for border
-#define PAGE_SIZE 15 // number of todos to display per page
+#define TOP_OFFSET 5 // includes 3 lines for the title and 1 line for column header and 1 line for border
+#define PAGE_SIZE 15 // number of todos to display on screen
 
 #define HEADER_LINE 2
 #define FOOTER_LINE TOP_OFFSET+PAGE_SIZE+1
@@ -23,13 +23,34 @@
 
 
 static void fmt_date_std(char* buf, const int size, struct tm* dt) {
-    if (dt->tm_year==0) {
-        for (int i=0; i<size; i++)
-            buf[i] = ' ';
-        buf[10] = '\0';
-    }
+    if (dt->tm_year==0)
+        snprintf(buf, size, "%-*s", size, " ");
     else
         strftime(buf, size, "%m/%d/%Y", dt);
+}
+
+
+static void fmt_due_date(char* buf, const int size, struct tm* dt) {
+    if (dt->tm_year==0)
+        snprintf(buf, size, "%-*s", size, " ");
+    else {
+        time_t dt_stamp = mktime(dt);
+        time_t now_stamp;
+        time (&now_stamp);
+        int hours = (dt_stamp-now_stamp)/60/60;
+        int days = hours / 24;
+
+        if (hours < -47)
+            snprintf(buf, size, "%d days ago", abs(days));
+        else if (hours < -23)
+            snprintf(buf, size, "yesterday");
+        else if (hours < 0)
+            snprintf(buf, size, "today");
+        else if (hours < 23)
+            snprintf(buf, size, "tomorrow");
+        else
+            snprintf(buf, size, "in %d days", days);
+    }
 }
 
 
@@ -38,20 +59,23 @@ static void print_todo(TodoUI* u, int todo_idx)
     console_clear_line();
     Todo* t = &u->todos->todos[todo_idx];
 
-    char* color_cd;
+    const char* color_cd;
     switch(t->priority) {
         case 'A':
-            color_cd = COLOR_YELLOW;
+            color_cd = COLOR_BOLD COLOR_RED;
             break;
         case 'B':
-            color_cd = COLOR_GREEN;
+            color_cd = COLOR_BOLD COLOR_GREEN;
+            break;
+        case 'C':
+            color_cd = COLOR_BOLD COLOR_BLUE;
             break;
         default:
-            color_cd = COLOR_RESET;
+            color_cd = COLOR_LIGHT_GRAY;
             break;
     }
 
-    printf("%s %3d"V_LINE_CHAR"%s", COLOR_GRAY, t->tid, COLOR_RESET);
+    printf("%s %3d"V_LINE_CHAR, COLOR_GRAY, t->tid);
     if (u->vcpos.line + u->scroll_state == todo_idx)
         printf("%s"COLOR_BOLD COLOR_INVERSE, color_cd);
     else
@@ -63,21 +87,39 @@ static void print_todo(TodoUI* u, int todo_idx)
     char fin_dt[11];
     fmt_date_std(fin_dt, 11, &t->finished_date);
 
-    char due_dt[11];
-    fmt_date_std(due_dt, 11, &t->due_date);
+    char due_dt[15];
+    if (t->finished) {
+        due_dt[0] = ' ';
+        due_dt[1] = '\0';
+    }
+    else {
+        fmt_due_date(due_dt, 15, &t->due_date);
+    }
 
     char pri[4] = "   ";
     if (t->priority!=NO_PRIORITY)
         snprintf(pri, 4, "(%c)", t->priority);
 
-    int note_width = (u->maxpos.col - u->minpos.col)/ 2;
-    printf("%c %s %s %s "V_LINE_CHAR"%-*.*s %-10.10s %s%s\n",
+    int note_width = (u->maxpos.col - u->minpos.col)/ 2.2;
+
+    char* todo_copy = calloc(note_width, sizeof(char));
+    strncpy(todo_copy, t->todo, note_width);
+
+    if (strlen(t->todo) >= note_width) {
+        for (int i=1; i<=2; i++)
+            todo_copy[note_width-i] = '.';
+    }
+
+    printf(" %c %s %s %s "V_LINE_CHAR"%-*.*s %-12.12s %-15.15s%s\n",
         t->finished ? 'x' : ' ',
         pri, created_dt, fin_dt,
-        note_width, note_width, t->todo,
+        note_width, note_width, todo_copy,
         t->contexts[0], due_dt,
         COLOR_RESET);
+
+    free(todo_copy);
 }
+
 
 static void draw_line(TodoUI* u, int on_line)
 {
@@ -88,6 +130,7 @@ static void draw_line(TodoUI* u, int on_line)
     }
     printf(COLOR_RESET);
 }
+
 
 static void print_header(TodoUI* u)
 {
@@ -102,6 +145,7 @@ static void print_header(TodoUI* u)
     printf(COLOR_RESET);
 }
 
+
 static void print_footer_left(TodoUI* u, const char* fmt, ...)
 {
     cursor_position(FOOTER_LINE, u->minpos.col + (u->maxpos.col / 2));
@@ -114,6 +158,7 @@ static void print_footer_left(TodoUI* u, const char* fmt, ...)
     va_end(arg);
     printf(COLOR_RESET);
 }
+
 
 static void print_footer_right(TodoUI* u, const char* fmt, ...)
 {
@@ -132,6 +177,7 @@ static void print_footer_right(TodoUI* u, const char* fmt, ...)
     printf("%s", msg);
     printf(COLOR_RESET);
 }
+
 
 static void print_default_footer(TodoUI* u)
 {
@@ -200,6 +246,7 @@ int todoui_vc_up(TodoUI* u, int n)
     cursor_position(u->cpos.line, u->cpos.col);
     return 0;
 }
+
 
 int todoui_vc_down(TodoUI* u, int n)
 {
