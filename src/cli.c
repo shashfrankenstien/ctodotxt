@@ -28,25 +28,49 @@ void iterlines(FILE* fp, getline_cb_t cb, void* data)
 #endif
 }
 
+void read_conf(void* todos, char* line)
+{
+    if (line[0]=='#') return; // commented
 
+    int cpy_len;
+    char filename[256];// = "todo.txt";
+
+    if (line[strlen(line)-1] == '\n')
+        cpy_len = strlen(line)-1;
+    else
+        cpy_len = strlen(line);
+
+    strncpy(filename, line, cpy_len);
+    filename[cpy_len] = '\0';
+
+    printf("%s\n", filename);
+    FILE* fp = fopen(filename, "r");
+    if (fp == NULL)
+        return;
+
+    iterlines(fp, todoarray_add_cb, (TodoArray*)todos);
+    fclose(fp);
+}
 
 
 int main (int argc, char *argv[])
 {
-    char filename[] = "todo.txt";
-    FILE* fp = fopen(filename, "r");
-    if (fp == NULL)
-        goto error;
-
     TodoArray todos = todoarray_init();
-    iterlines(fp, todoarray_add_cb, &todos);
-    fclose(fp);
 
+    {
+        FILE* fp = fopen("todo.conf", "r");
+        if (fp == NULL)
+            goto error;
+
+        iterlines(fp, read_conf, &todos);
+        fclose(fp);
+    }
 
     // sort test
-    // todoarray_sort(&todos, FINISHED);
+    todoarray_sort(&todos, PRIORITY);
+    todoarray_sort(&todos, FINISHED_DATE);
 
-    TodoUI ui = todoui_init(&todos, argv[0], filename);
+    TodoUI ui = todoui_init(&todos, argv[0], "todo.txt");
 
     // // filter test
     // {

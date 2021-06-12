@@ -13,7 +13,7 @@
 #define HEADER_LINE 2
 #define FOOTER_LINE TOP_OFFSET+PAGE_SIZE+1
 
-#define NOTE_WIDTH_FACTOR  1/2.2
+#define NOTE_WIDTH_FACTOR 1/2.2
 
 #if PLATFORM_WIN == 1
     #define H_LINE_CHAR "_"
@@ -23,12 +23,26 @@
     #define V_LINE_CHAR "\u2502"
 #endif
 
+#define STD_DATE_WIDTH 7
+#define STD_DATE_FMT "%d-%b"
+
+#define NOTE_TAG_WIDTH 10 // context or project name
+
 
 static void fmt_date_std(char* buf, const int size, struct tm* dt) {
     if (dt->tm_year==0)
         snprintf(buf, size, "%-*s", size, " ");
-    else
-        strftime(buf, size, "%m/%d/%Y", dt);
+    else {
+        time_t rawtime;
+        struct tm * timeinfo;
+        time ( &rawtime );
+        timeinfo = localtime ( &rawtime );
+
+        if (timeinfo->tm_year != dt->tm_year)
+            strftime(buf, size, "%Y", dt);
+        else
+            strftime(buf, size, STD_DATE_FMT, dt);
+    }
 }
 
 
@@ -83,11 +97,11 @@ static void print_todo(TodoUI* u, int todo_idx)
     else
         printf("%s", color_cd);
 
-    char created_dt[11];
-    fmt_date_std(created_dt, 11, &t->created_date);
+    char created_dt[STD_DATE_WIDTH];
+    fmt_date_std(created_dt, STD_DATE_WIDTH, &t->created_date);
 
-    char fin_dt[11];
-    fmt_date_std(fin_dt, 11, &t->finished_date);
+    char fin_dt[STD_DATE_WIDTH];
+    fmt_date_std(fin_dt, STD_DATE_WIDTH, &t->finished_date);
 
     char due_dt[15];
     if (t->finished) {
@@ -112,14 +126,34 @@ static void print_todo(TodoUI* u, int todo_idx)
             todo_copy[note_width-i] = '.';
     }
 
-    printf(" %c %s %s %s "V_LINE_CHAR" %-*.*s"V_LINE_CHAR" %-12.12s %-15.15s"COLOR_RESET COLOR_GRAY V_LINE_CHAR COLOR_RESET"\n",
-        t->finished ? 'x' : ' ',
-        pri, created_dt, fin_dt,
+    printf(" %c %s  %-*.*s %-*.*s "V_LINE_CHAR" %-*.*s"V_LINE_CHAR" %-*.*s %-15.15s"COLOR_RESET COLOR_GRAY V_LINE_CHAR COLOR_RESET"\n",
+        t->finished ? 'x' : ' ', pri,
+        STD_DATE_WIDTH, STD_DATE_WIDTH, created_dt,
+        STD_DATE_WIDTH, STD_DATE_WIDTH, fin_dt,
         note_width, note_width, todo_copy,
-        t->contexts[0], due_dt
+        NOTE_TAG_WIDTH, NOTE_TAG_WIDTH, t->contexts[0],
+        due_dt
     );
 
     free(todo_copy);
+}
+
+
+static void print_columns_names(TodoUI* u)
+{
+    cursor_position(TOP_OFFSET-1, u->minpos.col+5); // position cursor past the index column
+    int note_width = (u->maxpos.col - u->minpos.col) * NOTE_WIDTH_FACTOR;
+    printf(
+        COLOR_UNDERLINED
+        COLOR_GRAY
+        " F  P   %-*s %-*s   %-*s  %-*s %-15s"
+        COLOR_RESET, // fmt ends
+        STD_DATE_WIDTH, "add",
+        STD_DATE_WIDTH, "fin",
+        note_width, "todo",
+        NOTE_TAG_WIDTH, "context",
+        "due"
+    );
 }
 
 
@@ -147,22 +181,6 @@ static void print_header(TodoUI* u)
     printf(COLOR_RESET);
 }
 
-static void print_columns_names(TodoUI* u)
-{
-    cursor_position(TOP_OFFSET-1, u->minpos.col+5); // position cursor past the index column
-    int note_width = (u->maxpos.col - u->minpos.col) * NOTE_WIDTH_FACTOR;
-    printf(
-        COLOR_UNDERLINED
-        COLOR_GRAY
-        " F  P  %-10s %-10s   %-*s  %-12s %-15s"
-        COLOR_RESET, // fmt ends
-        "created",
-        "finished",
-        note_width, "todo",
-        "context",
-        "due"
-    );
-}
 
 
 static void print_footer_left(TodoUI* u, const char* fmt, ...)
