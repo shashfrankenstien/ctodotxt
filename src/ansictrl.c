@@ -16,18 +16,18 @@
 #include <conio.h>
 #include <windows.h>
 
-char readkey(bool* special)
+char readkey(bool* multibyte)
 {
-	bool _special = false;
+	bool _multibyte = false;
 	char c = _getch();
 	if (c==0 || c == -32) {
 		int nbbytes = _kbhit(); // check if there are any pending bits
 		for (int i=0; i<nbbytes; i++) {
-			c = _getch(); // special chars
-			_special = true;
+			c = _getch(); // multibyte chars
+			_multibyte = true;
 		}
 	}
-	*special = _special;
+	*multibyte = _multibyte;
 	return c;
 }
 
@@ -64,22 +64,22 @@ static void reset_termios(void) /* Restore old terminal i/o settings */
 	tcsetattr(0, TCSANOW, &old);
 }
 
-char readkey(bool* special) /* Read 1 character */
+char readkey(bool* multibyte) /* Read 1 character */
 {
 	init_termios();
 	char c = getchar();
-	bool _special = false;
+	bool _multibyte = false;
 
 	if (c==27) {
 		int nbbytes;
 		ioctl(0, FIONREAD, &nbbytes); // check if there are any pending bits
 		for (int i=0; i<nbbytes; i++) {
-			c = getchar(); // special chars
-			_special = true;
+			c = getchar(); // multibyte chars
+			_multibyte = true;
 		}
 	}
 	reset_termios();
-	*special = _special;
+	*multibyte = _multibyte;
 	return c;
 }
 

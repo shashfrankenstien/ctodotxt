@@ -1,7 +1,7 @@
 0_py_impl
 .vscode
 
-todo-txt*
+ctodo*
 *.txt
 
 experimental

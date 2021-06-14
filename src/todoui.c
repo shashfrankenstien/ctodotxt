@@ -257,7 +257,7 @@ int todoui_draw(TodoUI* u)
 
     draw_line(u, FOOTER_LINE-1);
     print_default_footer(u);
-    cursor_position(u->cpos.line, u->cpos.col);
+    todoui_reset_cursor(u);
     return 0;
 }
 
@@ -279,7 +279,7 @@ int todoui_vc_up(TodoUI* u, int n)
     }
 
     print_default_footer(u);
-    cursor_position(u->cpos.line, u->cpos.col);
+    todoui_reset_cursor(u);
     return 0;
 }
 
@@ -302,6 +302,12 @@ int todoui_vc_down(TodoUI* u, int n)
     }
 
     print_default_footer(u);
-    cursor_position(u->cpos.line, u->cpos.col);
+    todoui_reset_cursor(u);
     return 0;
+}
+
+
+void todoui_reset_cursor(TodoUI* u)
+{
+    cursor_position(u->cpos.line, u->cpos.col);
 }

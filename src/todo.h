@@ -55,9 +55,9 @@ typedef enum {
 int todo_parse(Todo* t, char* line);
 int todo_rebuild(Todo* t, char* out);
 
+// sorting and filtering
 int todo_cmp_asc(const void* t, const void* oth, void* field);
 int todo_cmp_desc(const void* t, const void* oth, void* field);
-
 bool todo_match(Todo* t, const char* pat);
 
 
@@ -84,7 +84,7 @@ int todoarray_add(TodoArray* t, char* line);
 void todoarray_add_cb(void* obj, char* line);
 
 
+// sorting and filtering
 int todoarray_sort(TodoArray* t, TodoField field);
 int todoarray_sort_desc(TodoArray* t, TodoField field);
-
 TodoSlice todoarray_filter(TodoArray* src, const char* pattern);

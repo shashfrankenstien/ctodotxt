@@ -1,4 +1,4 @@
-APP := todo-txt
+APP := ctodo
 
 CC := gcc
 INCLUDES := -I./src -I./vendor

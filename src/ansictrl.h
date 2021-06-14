@@ -17,7 +17,7 @@
 #define SPACE_BAR 32
 #define BACK_SPACE 8
 
-// specials
+// multibyte
 #define LEFT 75
 #define RIGHT 77
 #define UP 72
@@ -34,7 +34,7 @@
 #define SPACE_BAR 32
 #define BACK_SPACE 127
 
-// specials
+// multibyte
 #define LEFT 68
 #define RIGHT 67
 #define UP 65
@@ -85,7 +85,7 @@
 #define CURSOR_MOVE_RIGHT_TMPL "\033[%dC"
 #define CURSOR_MOVE_LEFT_TMPL "\033[%dD"
 
-char readkey(bool* special);
+char readkey(bool* multibyte);
 int get_console_size(int* lines, int* cols);
 
 void console_clear_screen();
