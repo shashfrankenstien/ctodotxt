@@ -3,7 +3,7 @@
 #include <stdarg.h>
 
 #include "todo.h"
-#include "todoui.h"
+#include "ui.h"
 #include "ansictrl.h"
 
 
