@@ -7,6 +7,8 @@
 #include "ansictrl.h"
 
 
+#define CONFIG_FILE "todo.conf"
+
 
 // file reader
 typedef void (*getline_cb_t)(void* data, char* line); // callback type for iterlines over a file
@@ -18,6 +20,17 @@ void read_conf(void* todos, char* line); // is of type getline_cb_t
 
 
 // cli commands
+
+typedef struct {
+    char cmd_str[64];
+    int len;
+} cmd_str_t;
+
+void cmd_add(cmd_str_t*, char);
+void cmd_pop(cmd_str_t*);
+void cmd_clear(cmd_str_t*);
+int cmd_getint(cmd_str_t*);
+
 
 typedef enum {
     NOOP = -1,
@@ -49,7 +62,7 @@ static cmd_lookup_t cmd_lookup_table[] = {
 
 #define NCMDS (sizeof(cmd_lookup_table)/sizeof(cmd_lookup_t))
 
-cmd_var todoui_lookup_cmd(char* cmd_str);
+cmd_var lookup_cmd(char* cmd_str);
 int command_mode(TodoUI* ui);
 void perform_sort_cmd(TodoUI* ui);
 
@@ -57,7 +70,38 @@ void perform_sort_cmd(TodoUI* ui);
 
 // impl
 
-cmd_var todoui_lookup_cmd(char* cmd_str)
+void cmd_add(cmd_str_t* m, char c)
+{
+	m->cmd_str[m->len] = c;
+	m->cmd_str[++m->len] = '\0';
+}
+
+void cmd_pop(cmd_str_t* m)
+{
+	m->cmd_str[--m->len] = '\0';
+}
+
+void cmd_clear(cmd_str_t* m)
+{
+	m->cmd_str[0] = '\0';
+	m->len = 0;
+}
+
+int cmd_getint(cmd_str_t* m)
+{
+	if (m->len == 0)
+		return -1;
+
+	for (int i=0; i<m->len; i++)
+	{
+		if (m->cmd_str[i] > '9' && m->cmd_str[i] < '0')
+			return -1;
+	}
+	return atoi(m->cmd_str);
+}
+
+
+cmd_var lookup_cmd(char* cmd_str)
 {
     for (int i=0; i < NCMDS; i++) {
         if (strcmp(cmd_lookup_table[i].cmd_str, cmd_str) == 0)
@@ -68,13 +112,13 @@ cmd_var todoui_lookup_cmd(char* cmd_str)
 
 
 
+
 int command_mode(TodoUI* ui)
 {
     char ch;
     bool multibyte;
 
-    char cmd[256];
-    int cmd_idx = 0;
+    cmd_str_t cmd = {"", 0};
 
     bool done = false;
     while (!done) {
@@ -84,12 +128,11 @@ int command_mode(TodoUI* ui)
         else {
             switch(ch) {
                 case ENTER:
-                    cmd[cmd_idx] = '\0'; // finalize
                     done = true;
                     break;
 
                 case ESCAPE:
-                    cmd[0] = '\0'; // clear command
+                    cmd_clear(&cmd);
                     done = true;
                     break;
 
@@ -97,15 +140,15 @@ int command_mode(TodoUI* ui)
                     putchar('\b');
                     putchar(' ');
                     putchar('\b');
-                    if (cmd_idx>0)
-                        cmd[--cmd_idx] = '\0'; // clear char
+                    if (cmd.len>0)
+                        cmd_clear(&cmd);
                     else
                         done=true;
                     break;
 
                 default:
                     putchar(ch);
-                    cmd[cmd_idx++] = ch;
+                    cmd_add(&cmd, ch);
                     break;
             }
         }
@@ -114,7 +157,7 @@ int command_mode(TodoUI* ui)
     console_clear_line();
 
     int quit = 0;
-    switch(todoui_lookup_cmd(cmd)) {
+    switch(lookup_cmd(cmd.cmd_str)) {
         case QUIT:
             quit = 1;
             break;
@@ -233,7 +276,7 @@ int main (int argc, char *argv[])
     TodoArray todos = todoarray_init();
 
     {
-        FILE* fp = fopen("todo.conf", "r");
+        FILE* fp = fopen(CONFIG_FILE, "r");
         if (fp == NULL)
             goto error;
 
@@ -241,7 +284,7 @@ int main (int argc, char *argv[])
         fclose(fp);
     }
 
-    // sort test
+    // default sort
     todoarray_sort(&todos, PRIORITY);
     todoarray_sort(&todos, FINISHED_DATE);
 
@@ -261,8 +304,10 @@ int main (int argc, char *argv[])
 
     todoui_draw(&ui);
 
-    char ch;
+    int ch, n;
     bool multibyte;
+
+    cmd_str_t nav_cmd = {"", 0}; // navigation store for commands like 5j (navigate down 5 rows)
 
     bool done = false;
     while (!done) {
@@ -270,11 +315,17 @@ int main (int argc, char *argv[])
         if (multibyte) {
             switch(ch) {
                 case UP:
-                    todoui_vc_up(&ui, 1);
+                    n = cmd_getint(&nav_cmd);
+                    if (n < 0) n = 1;
+                    todoui_vc_up(&ui, n);
+                    cmd_clear(&nav_cmd);
                     break;
 
                 case DOWN:
-                    todoui_vc_down(&ui, 1);
+                    n = cmd_getint(&nav_cmd);
+                    if (n < 0) n = 1;
+                    todoui_vc_down(&ui, n);
+                    cmd_clear(&nav_cmd);
                     break;
 
                 // case LEFT:
@@ -293,12 +344,32 @@ int main (int argc, char *argv[])
             switch(ch) {
                 case ENTER:
                     todoui_draw(&ui);
+                    cmd_clear(&nav_cmd);
                     break;
 
                 case ESCAPE:
                     todoui_reset_cursor(&ui);
                     console_clear_line();
+                    cmd_clear(&nav_cmd);
                     // done = true;
+                    break;
+
+                case 'j':
+                    n = cmd_getint(&nav_cmd);
+                    if (n < 0) n = 1;
+                    todoui_vc_down(&ui, n);
+                    cmd_clear(&nav_cmd);
+                    break;
+
+                case 'k':
+                    n = cmd_getint(&nav_cmd);
+                    if (n < 0) n = 1;
+                    todoui_vc_up(&ui, n);
+                    cmd_clear(&nav_cmd);
+                    break;
+
+               case '0' ... '9':
+                    cmd_add(&nav_cmd, ch);
                     break;
 
                 case ':':
@@ -309,7 +380,7 @@ int main (int argc, char *argv[])
                     break;
 
                 default:
-                    putchar(ch);
+                    // putchar(ch);
                     break;
             }
         }

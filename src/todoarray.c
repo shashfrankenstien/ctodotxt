@@ -1,22 +1,6 @@
 #include <stdlib.h> // for calloc, realloc and free
 #include <stdio.h>
 
-// /* These guards are required for sort_r.h while using TDM-GCC on Windows
-// *  Waiting for resolution of issue https://github.com/noporpoise/sort_r/issues/14
-// */
-// #ifdef __MINGW32__
-//     #define __REMOVED__MINGW32__
-//     #undef __MINGW32__
-// #endif
-
-// #include "sort_r.h"
-
-// #ifdef __REMOVED__MINGW32__
-//     #define __MINGW32__ 1
-//     #undef __REMOVED__MINGW32__
-// #endif
-
-
 #include "todo.h"
 #include "mergesort.h"
 

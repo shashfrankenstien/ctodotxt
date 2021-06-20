@@ -262,20 +262,31 @@ int todoui_draw(TodoUI* u)
 }
 
 
-int todoui_vc_up(TodoUI* u, int n)
+static int todoui_vc_nav(TodoUI* u, int n)
 {
-    // check if scroll is required
-    if (u->vcpos.line-n < 0 && u->scroll_state > 0) {
-        u->vcpos.line = 0;
-        u->scroll_state = MAX(u->scroll_state - n, 0);
+    int orig_scroll = u->scroll_state;
+    int orig_todo_idx = u->vcpos.line + u->scroll_state;
+
+    int new_todo_idx = MAX(MIN(orig_todo_idx + n, u->todos->n_todos-1), 0);
+    int new_vpos = MAX(MIN(u->vcpos.line + n, MIN(PAGE_SIZE-1, u->todos->n_todos-1)), 0);
+    int new_scroll = MAX(new_todo_idx - new_vpos, 0);
+
+    if (new_scroll > orig_scroll) { // gotta scroll down and set vpos to PAGE_SIZE
+        u->scroll_state = new_scroll;
+        u->vcpos.line = PAGE_SIZE-1;
         todoui_draw(u);
     }
-    else if (u->vcpos.line >= n) {
+    else if (new_scroll < orig_scroll) { // gotta scroll up and set vpos to 0
+        u->scroll_state = new_scroll;
+        u->vcpos.line = 0;
+        todoui_draw(u);
+    }
+    else {
         cursor_position(u->vcpos.line+TOP_OFFSET, u->minpos.col);
-        u->vcpos.line -= n;
-        print_todo(u, u->vcpos.line+u->scroll_state+n);
+        u->vcpos.line = new_vpos;
+        print_todo(u, orig_todo_idx);
         cursor_position(u->vcpos.line+TOP_OFFSET, u->minpos.col);
-        print_todo(u, u->vcpos.line+u->scroll_state);
+        print_todo(u, new_todo_idx);
     }
 
     print_default_footer(u);
@@ -286,24 +297,13 @@ int todoui_vc_up(TodoUI* u, int n)
 
 int todoui_vc_down(TodoUI* u, int n)
 {
-    // check if scroll is required
-    if (u->vcpos.line+n >= PAGE_SIZE && u->todos->n_todos > (u->scroll_state+PAGE_SIZE)) {
-        u->vcpos.line = PAGE_SIZE-1;
-        u->scroll_state = MIN(u->scroll_state + n, u->todos->n_todos-1);
-        todoui_draw(u);
-    }
-    else if (u->vcpos.line+u->scroll_state+n < u->todos->n_todos) {
-        cursor_position(u->vcpos.line+TOP_OFFSET, u->minpos.col);
-        u->vcpos.line += n;
-        print_todo(u, u->vcpos.line+u->scroll_state-n);
-        cursor_position(u->vcpos.line+TOP_OFFSET, u->minpos.col);
-        print_todo(u, u->vcpos.line+u->scroll_state);
+    return todoui_vc_nav(u, n);
+}
 
-    }
 
-    print_default_footer(u);
-    todoui_reset_cursor(u);
-    return 0;
+int todoui_vc_up(TodoUI* u, int n)
+{
+    return todoui_vc_nav(u, n*-1);
 }
 
 
