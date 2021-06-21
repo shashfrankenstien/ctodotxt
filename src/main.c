@@ -141,7 +141,7 @@ int command_mode(TodoUI* ui)
                     putchar(' ');
                     putchar('\b');
                     if (cmd.len>0)
-                        cmd_clear(&cmd);
+                        cmd_pop(&cmd);
                     else
                         done=true;
                     break;
@@ -195,27 +195,27 @@ void perform_sort_cmd(TodoUI* ui)
                     break;
 
                 case 'f':
-                    todoarray_sort(ui->todos, FINISHED_DATE);
+                    todoslice_sort(ui->todos, FINISHED_DATE);
                     todoui_draw(ui);
                     break;
 
                 case 'c':
-                    todoarray_sort(ui->todos, CREATED_DATE);
+                    todoslice_sort(ui->todos, CREATED_DATE);
                     todoui_draw(ui);
                     break;
 
                 case 'p':
-                    todoarray_sort(ui->todos, PRIORITY);
+                    todoslice_sort(ui->todos, PRIORITY);
                     todoui_draw(ui);
                     break;
 
                 case 'd':
-                    todoarray_sort(ui->todos, DUE_DATE);
+                    todoslice_sort(ui->todos, DUE_DATE);
                     todoui_draw(ui);
                     break;
 
                 case 'i':
-                    todoarray_sort(ui->todos, ID);
+                    todoslice_sort(ui->todos, ID);
                     todoui_draw(ui);
                     break;
             }
@@ -285,8 +285,9 @@ int main (int argc, char *argv[])
     }
 
     // default sort
-    todoarray_sort(&todos, PRIORITY);
-    todoarray_sort(&todos, FINISHED_DATE);
+    todoslice_create(&todos);
+    todoslice_sort(&todos, PRIORITY);
+    todoslice_sort(&todos, FINISHED_DATE);
 
     TodoUI ui = todoui_init(&todos, argv[0], "todo.txt");
 

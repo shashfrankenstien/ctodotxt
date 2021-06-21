@@ -2,7 +2,6 @@
 #include <stdio.h>
 
 #include "todo.h"
-#include "mergesort.h"
 
 
 #ifndef ARRAY_ALLOC_SIZE
@@ -14,20 +13,19 @@ TodoArray todoarray_init()
     TodoArray t;
     t.todos = calloc(ARRAY_ALLOC_SIZE, sizeof(Todo));
     t.n_todos = 0;
+
+    t.slice = NULL;
+    t.n_slice = 0;
     return t;
 }
 
 int todoarray_release(TodoArray* t)
 {
+    free(t->slice);
     free(t->todos);
     return 0;
 }
 
-int todoslice_release(TodoSlice* t)
-{
-    free(t->todos);
-    return 0;
-}
 
 
 int todoarray_add(TodoArray* t, char* line)
@@ -45,31 +43,4 @@ int todoarray_add(TodoArray* t, char* line)
 void todoarray_add_cb(void* obj, char* line)
 {
     todoarray_add((TodoArray*)obj, line);
-}
-
-int todoarray_sort(TodoArray* t, TodoField field)
-{
-    msort_r(t->todos, t->n_todos, sizeof(Todo), todo_cmp_asc, &field);
-    return 0;
-}
-
-int todoarray_sort_desc(TodoArray* t, TodoField field)
-{
-    msort_r(t->todos, t->n_todos, sizeof(Todo), todo_cmp_desc, &field);
-    return 0;
-}
-
-TodoSlice todoarray_filter(TodoArray* src, const char* pattern)
-{
-    TodoSlice slc;
-    slc.n_todos = 0;
-    slc.todos = calloc(src->n_todos, sizeof(Todo*));
-
-    for (int i=0; i<src->n_todos; i++) {
-        if (todo_match(&src->todos[i], pattern)) {
-            slc.todos[slc.n_todos++] = &src->todos[i];
-        }
-    }
-
-    return slc;
 }

@@ -73,7 +73,7 @@ static void fmt_due_date(char* buf, const int size, struct tm* dt) {
 static void print_todo(TodoUI* u, int todo_idx)
 {
     console_clear_line();
-    Todo* t = &u->todos->todos[todo_idx];
+    Todo* t = u->todos->slice[todo_idx];
 
     const char* color_cd;
     switch(t->priority) {
@@ -219,8 +219,8 @@ static void print_footer_right(TodoUI* u, const char* fmt, ...)
 static void print_default_footer(TodoUI* u)
 {
     int cur_idx = u->vcpos.line+u->scroll_state;
-    print_footer_left(u, "%s", u->todos->todos[cur_idx].todo);
-    print_footer_right(u, "%d/%d", cur_idx+1, u->todos->n_todos);
+    print_footer_left(u, "%s", u->todos->slice[cur_idx]->todo);
+    print_footer_right(u, "%d/%d", cur_idx+1, u->todos->n_slice);
 }
 
 
@@ -251,7 +251,7 @@ int todoui_draw(TodoUI* u)
     print_columns_names(u);
     cursor_position(TOP_OFFSET, u->minpos.col);
 
-    for (int i=u->scroll_state; i<MIN(u->todos->n_todos, PAGE_SIZE+u->scroll_state); i++) {
+    for (int i=u->scroll_state; i<MIN(u->todos->n_slice, PAGE_SIZE+u->scroll_state); i++) {
         print_todo(u, i);
     }
 
@@ -267,8 +267,8 @@ static int todoui_vc_nav(TodoUI* u, int n)
     int orig_scroll = u->scroll_state;
     int orig_todo_idx = u->vcpos.line + u->scroll_state;
 
-    int new_todo_idx = MAX(MIN(orig_todo_idx + n, u->todos->n_todos-1), 0);
-    int new_vpos = MAX(MIN(u->vcpos.line + n, MIN(PAGE_SIZE-1, u->todos->n_todos-1)), 0);
+    int new_todo_idx = MAX(MIN(orig_todo_idx + n, u->todos->n_slice-1), 0);
+    int new_vpos = MAX(MIN(u->vcpos.line + n, MIN(PAGE_SIZE-1, u->todos->n_slice-1)), 0);
     int new_scroll = MAX(new_todo_idx - new_vpos, 0);
 
     if (new_scroll > orig_scroll) { // gotta scroll down and set vpos to PAGE_SIZE

@@ -55,7 +55,7 @@ typedef enum {
 int todo_parse(Todo* t, char* line);
 int todo_rebuild(Todo* t, char* out);
 
-// sorting and filtering
+// sorting and filtering helpers
 int todo_cmp_asc(const void* t, const void* oth, void* field);
 int todo_cmp_desc(const void* t, const void* oth, void* field);
 bool todo_match(Todo* t, const char* pat);
@@ -66,25 +66,23 @@ bool todo_match(Todo* t, const char* pat);
 typedef struct {
     Todo* todos;
     int n_todos;
-} TodoArray;
 
-// slice contains pointers to TodoArray elements
-typedef struct {
-    Todo** todos;
-    int n_todos;
-} TodoSlice;
+    // slice contains pointers to TodoArray elements
+    Todo** slice;
+    int n_slice;
+} TodoArray;
 
 
 TodoArray todoarray_init();
 int todoarray_release(TodoArray* t);
-int todoslice_release(TodoSlice* t);
-
 
 int todoarray_add(TodoArray* t, char* line);
 void todoarray_add_cb(void* obj, char* line);
 
 
+// slice operations
+int todoslice_create(TodoArray* t);
 // sorting and filtering
-int todoarray_sort(TodoArray* t, TodoField field);
-int todoarray_sort_desc(TodoArray* t, TodoField field);
-TodoSlice todoarray_filter(TodoArray* src, const char* pattern);
+int todoslice_sort(TodoArray* t, TodoField field);
+int todoslice_sort_desc(TodoArray* t, TodoField field);
+int todoslice_filter(TodoArray* src, const char* pattern);
