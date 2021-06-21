@@ -64,7 +64,7 @@ static cmd_lookup_t cmd_lookup_table[] = {
 
 cmd_var lookup_cmd(char* cmd_str);
 int command_mode(TodoUI* ui);
-void perform_sort_cmd(TodoUI* ui);
+void perform_sort_cmd(TodoUI* ui, char* cmd_str);
 
 
 
@@ -103,11 +103,18 @@ int cmd_getint(cmd_str_t* m)
 
 cmd_var lookup_cmd(char* cmd_str)
 {
+    char* tempstr = calloc(strlen(cmd_str)+1, sizeof(char));
+    strncpy(tempstr, cmd_str, strlen(cmd_str)+1);
+    char *token = strtok(tempstr, " ");
+
+    cmd_var out = NOOP;
     for (int i=0; i < NCMDS; i++) {
-        if (strcmp(cmd_lookup_table[i].cmd_str, cmd_str) == 0)
-            return cmd_lookup_table[i].cmd;
+        if (strcmp(cmd_lookup_table[i].cmd_str, token) == 0) {
+            out = cmd_lookup_table[i].cmd;
+        }
     }
-    return NOOP;
+    free(tempstr);
+    return out;
 }
 
 
@@ -163,7 +170,7 @@ int command_mode(TodoUI* ui)
             break;
 
         case SORT:
-            perform_sort_cmd(ui);
+            perform_sort_cmd(ui, cmd.cmd_str);
             break;
 
         default:
@@ -174,8 +181,45 @@ int command_mode(TodoUI* ui)
 }
 
 
-void perform_sort_cmd(TodoUI* ui)
+static void inner_sort_by_char(TodoUI* ui, char cmd_char)
 {
+    switch(cmd_char) {
+        case 'f':
+            todoslice_sort(ui->todos, FINISHED_DATE);
+            todoui_draw(ui);
+            break;
+
+        case 'c':
+            todoslice_sort(ui->todos, CREATED_DATE);
+            todoui_draw(ui);
+            break;
+
+        case 'p':
+            todoslice_sort(ui->todos, PRIORITY);
+            todoui_draw(ui);
+            break;
+
+        case 'd':
+            todoslice_sort(ui->todos, DUE_DATE);
+            todoui_draw(ui);
+            break;
+
+        case 'i':
+            todoslice_sort(ui->todos, ID);
+            todoui_draw(ui);
+            break;
+    }
+}
+
+void perform_sort_cmd(TodoUI* ui, char* cmd_str)
+{
+    char* token = strtok(cmd_str, " "); // this is the actual sort command
+    token = strtok(NULL, " "); // this will be the first argument if any. this is the only arg we care about
+    if (token != NULL) {
+        inner_sort_by_char(ui, token[0]);
+        return;
+    }
+
     char ch;
     bool multibyte;
 
@@ -188,36 +232,12 @@ void perform_sort_cmd(TodoUI* ui)
 
         ch = readkey(&multibyte);
         if (!multibyte) {
-            switch(ch) {
-                case ESCAPE:
-                    todoui_draw(ui);
-                    done = true;
-                    break;
-
-                case 'f':
-                    todoslice_sort(ui->todos, FINISHED_DATE);
-                    todoui_draw(ui);
-                    break;
-
-                case 'c':
-                    todoslice_sort(ui->todos, CREATED_DATE);
-                    todoui_draw(ui);
-                    break;
-
-                case 'p':
-                    todoslice_sort(ui->todos, PRIORITY);
-                    todoui_draw(ui);
-                    break;
-
-                case 'd':
-                    todoslice_sort(ui->todos, DUE_DATE);
-                    todoui_draw(ui);
-                    break;
-
-                case 'i':
-                    todoslice_sort(ui->todos, ID);
-                    todoui_draw(ui);
-                    break;
+            if (ch == ESCAPE) {
+                todoui_draw(ui);
+                done = true;
+            }
+            else {
+                inner_sort_by_char(ui, ch);
             }
         }
     }
