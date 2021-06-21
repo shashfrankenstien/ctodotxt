@@ -105,7 +105,7 @@ cmd_var lookup_cmd(char* cmd_str)
 {
     char* tempstr = calloc(strlen(cmd_str)+1, sizeof(char));
     strncpy(tempstr, cmd_str, strlen(cmd_str)+1);
-    char *token = strtok(tempstr, " ");
+    char* token = strtok(tempstr, " ");
 
     cmd_var out = NOOP;
     for (int i=0; i < NCMDS; i++) {
@@ -122,42 +122,36 @@ cmd_var lookup_cmd(char* cmd_str)
 
 int command_mode(TodoUI* ui)
 {
-    char ch;
-    bool multibyte;
-
+    int ch;
     cmd_str_t cmd = {"", 0};
 
     bool done = false;
     while (!done) {
-        ch = readkey(&multibyte);
-        if (multibyte) {
-        }
-        else {
-            switch(ch) {
-                case ENTER:
-                    done = true;
-                    break;
+        ch = read_keypress();
+        switch(ch) {
+            case ENTER:
+                done = true;
+                break;
 
-                case ESCAPE:
-                    cmd_clear(&cmd);
-                    done = true;
-                    break;
+            case ESCAPE:
+                cmd_clear(&cmd);
+                done = true;
+                break;
 
-                case BACK_SPACE:
-                    putchar('\b');
-                    putchar(' ');
-                    putchar('\b');
-                    if (cmd.len>0)
-                        cmd_pop(&cmd);
-                    else
-                        done=true;
-                    break;
+            case BACK_SPACE:
+                putchar('\b');
+                putchar(' ');
+                putchar('\b');
+                if (cmd.len>0)
+                    cmd_pop(&cmd);
+                else
+                    done=true;
+                break;
 
-                default:
-                    putchar(ch);
-                    cmd_add(&cmd, ch);
-                    break;
-            }
+            default:
+                putchar(ch);
+                cmd_add(&cmd, ch);
+                break;
         }
     }
     todoui_reset_cursor(ui);
@@ -220,9 +214,7 @@ void perform_sort_cmd(TodoUI* ui, char* cmd_str)
         return;
     }
 
-    char ch;
-    bool multibyte;
-
+    int ch;
     bool done = false;
     while (!done) {
         printf(COLOR_YELLOW);
@@ -230,15 +222,13 @@ void perform_sort_cmd(TodoUI* ui, char* cmd_str)
         printf(COLOR_RESET);
         todoui_reset_cursor(ui);
 
-        ch = readkey(&multibyte);
-        if (!multibyte) {
-            if (ch == ESCAPE) {
-                todoui_draw(ui);
-                done = true;
-            }
-            else {
-                inner_sort_by_char(ui, ch);
-            }
+        ch = read_keypress();
+        if (ch == ESCAPE) {
+            todoui_draw(ui);
+            done = true;
+        }
+        else {
+            inner_sort_by_char(ui, ch);
         }
     }
 }
@@ -255,7 +245,7 @@ void iterlines(FILE* fp, getline_cb_t cb, void* data)
 		cb(data, line);
 	}
 #else
-	char *line = (char*) malloc(sizeof(char) * 1000);
+	char* line = (char*) malloc(sizeof(char) * 1000);
 	size_t size = 1000 * sizeof(char);
 	while(getline(&line, &size, fp) != EOF) {
 		cb(data, line);
@@ -291,7 +281,7 @@ void read_conf(void* todos, char* line)
 
 
 
-int main (int argc, char *argv[])
+int main (int argc, char* argv[])
 {
     TodoArray todos = todoarray_init();
 
@@ -326,84 +316,56 @@ int main (int argc, char *argv[])
     todoui_draw(&ui);
 
     int ch, n;
-    bool multibyte;
-
+    int cmd_res;
     cmd_str_t nav_cmd = {"", 0}; // navigation store for commands like 5j (navigate down 5 rows)
 
     bool done = false;
     while (!done) {
-        ch = readkey(&multibyte);
-        if (multibyte) {
-            switch(ch) {
-                case UP:
-                    n = cmd_getint(&nav_cmd);
-                    if (n < 0) n = 1;
-                    todoui_vc_up(&ui, n);
-                    cmd_clear(&nav_cmd);
-                    break;
+        ch = read_keypress();
+        switch(ch) {
 
-                case DOWN:
-                    n = cmd_getint(&nav_cmd);
-                    if (n < 0) n = 1;
-                    todoui_vc_down(&ui, n);
-                    cmd_clear(&nav_cmd);
-                    break;
+            case ENTER:
+                todoui_draw(&ui);
+                cmd_clear(&nav_cmd);
+                break;
 
-                // case LEFT:
-                //     cursor_mv_left(1);
-                //     break;
+            case ESCAPE:
+                todoui_reset_cursor(&ui);
+                console_clear_line();
+                cmd_clear(&nav_cmd);
+                // done = true;
+                break;
 
-                // case RIGHT:
-                //     cursor_mv_right(1);
-                //     break;
+            case 'j':
+            case DOWN:
+                n = cmd_getint(&nav_cmd);
+                if (n < 0) n = 1;
+                todoui_vc_down(&ui, n);
+                cmd_clear(&nav_cmd);
+                break;
 
-                default:
-                    break;
-            }
-        } else {
-            int cmd_res;
-            switch(ch) {
-                case ENTER:
-                    todoui_draw(&ui);
-                    cmd_clear(&nav_cmd);
-                    break;
+            case 'k':
+            case UP:
+                n = cmd_getint(&nav_cmd);
+                if (n < 0) n = 1;
+                todoui_vc_up(&ui, n);
+                cmd_clear(&nav_cmd);
+                break;
 
-                case ESCAPE:
-                    todoui_reset_cursor(&ui);
-                    console_clear_line();
-                    cmd_clear(&nav_cmd);
-                    // done = true;
-                    break;
+            case '0' ... '9':
+                cmd_add(&nav_cmd, ch);
+                break;
 
-                case 'j':
-                    n = cmd_getint(&nav_cmd);
-                    if (n < 0) n = 1;
-                    todoui_vc_down(&ui, n);
-                    cmd_clear(&nav_cmd);
-                    break;
+            case ':':
+                putchar(ch);
+                cmd_res = command_mode(&ui);
+                if (cmd_res!=0)
+                    done = true;
+                break;
 
-                case 'k':
-                    n = cmd_getint(&nav_cmd);
-                    if (n < 0) n = 1;
-                    todoui_vc_up(&ui, n);
-                    cmd_clear(&nav_cmd);
-                    break;
-
-               case '0' ... '9':
-                    cmd_add(&nav_cmd, ch);
-                    break;
-
-                case ':':
-                    putchar(ch);
-                    cmd_res = command_mode(&ui);
-                    if (cmd_res!=0)
-                        done = true;
-                    break;
-
-                default:
-                    // putchar(ch);
-                    break;
-            }
+            default:
+                // putchar(ch);
+                break;
         }
     }
     printf("\nExit!\n");

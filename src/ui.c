@@ -8,7 +8,7 @@
 
 
 #define TOP_OFFSET 5 // includes 3 lines for the title, 1 blank line and 1 line for column header
-#define PAGE_SIZE 15 // number of todos to display on screen
+#define PAGE_SIZE 20 // number of todos to display on screen
 
 #define HEADER_LINE 2
 #define FOOTER_LINE TOP_OFFSET+PAGE_SIZE+1

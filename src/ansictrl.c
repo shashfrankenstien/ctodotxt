@@ -9,6 +9,42 @@
 
 
 
+#if PLATFORM_WIN == 1
+
+#define __ENTER 13
+#define __ESCAPE 27
+#define __BACK_SPACE 8
+
+// multibyte
+#define __LEFT 75
+#define __RIGHT 77
+#define __UP 72
+#define __DOWN 80
+
+#define __HOME 71
+#define __END 79
+#define __DELETE 83
+
+#else
+
+#define __ENTER 10
+#define __ESCAPE 27
+#define __BACK_SPACE 127
+
+// multibyte
+#define __LEFT 68
+#define __RIGHT 67
+#define __UP 65
+#define __DOWN 66
+
+#define __HOME 72
+#define __END 70
+#define __DELETE 126
+
+#endif
+
+
+
 // platform specific 'readkey' and 'get_console_size' definitions
 
 #if PLATFORM_WIN == 1
@@ -16,7 +52,7 @@
 #include <conio.h>
 #include <windows.h>
 
-char readkey(bool* multibyte)
+static char readkey(bool* multibyte)
 {
 	bool _multibyte = false;
 	char c = _getch();
@@ -64,7 +100,7 @@ static void reset_termios(void) /* Restore old terminal i/o settings */
 	tcsetattr(0, TCSANOW, &old);
 }
 
-char readkey(bool* multibyte) /* Read 1 character */
+static char readkey(bool* multibyte) /* Read 1 character */
 {
 	init_termios();
 	char c = getchar();
@@ -82,7 +118,6 @@ char readkey(bool* multibyte) /* Read 1 character */
 	*multibyte = _multibyte;
 	return c;
 }
-
 
 
 int get_console_size(int* lines, int* cols)
@@ -103,6 +138,56 @@ int get_console_size(int* lines, int* cols)
 
 #endif
 
+
+// common getkey
+int read_keypress()
+{
+    int ch;
+    bool multibyte;
+    ch = readkey(&multibyte);
+    if (multibyte) {
+        switch(ch) {
+            case __LEFT:
+                return LEFT;
+                break;
+            case __RIGHT:
+                return RIGHT;
+                break;
+            case __UP:
+                return UP;
+                break;
+            case __DOWN:
+                return DOWN;
+                break;
+            case __HOME:
+                return HOME;
+                break;
+            case __END:
+                return END;
+                break;
+            case __DELETE:
+                return DELETE;
+                break;
+            default:
+                return UNKNOWN;
+                break;
+        }
+    }
+    else {
+        switch(ch) {
+            case __ENTER:
+                return ENTER;
+                break;
+            case __ESCAPE:
+                return ESCAPE;
+                break;
+            case __BACK_SPACE:
+                return BACK_SPACE;
+                break;
+        }
+    }
+    return ch; // return ch if all else fails
+}
 
 
 // navigation

@@ -10,44 +10,6 @@
 #endif
 
 
-#if PLATFORM_WIN == 1
-
-#define ENTER 13
-#define ESCAPE 27
-#define SPACE_BAR 32
-#define BACK_SPACE 8
-
-// multibyte
-#define LEFT 75
-#define RIGHT 77
-#define UP 72
-#define DOWN 80
-
-#define HOME 71
-#define END 79
-#define DELETE 83
-
-#else
-
-#define ENTER 10
-#define ESCAPE 27
-#define SPACE_BAR 32
-#define BACK_SPACE 127
-
-// multibyte
-#define LEFT 68
-#define RIGHT 67
-#define UP 65
-#define DOWN 66
-
-#define HOME 72
-#define END 70
-#define DELETE 126
-
-
-#endif
-
-
 #define supports_ansii() ((getenv("ANSICON") || PLATFORM_WIN==0) ? true : false)
 
 // colors
@@ -85,7 +47,24 @@
 #define CURSOR_MOVE_RIGHT_TMPL "\033[%dC"
 #define CURSOR_MOVE_LEFT_TMPL "\033[%dD"
 
-char readkey(bool* multibyte);
+
+enum SPECIAL_KEYS {
+    ENTER = 1000,
+    ESCAPE,
+    BACK_SPACE,
+    // multibyte
+    LEFT,
+    RIGHT,
+    UP,
+    DOWN,
+    HOME,
+    END,
+    DELETE,
+    UNKNOWN
+};
+
+
+int read_keypress();
 int get_console_size(int* lines, int* cols);
 
 void console_clear_screen();
