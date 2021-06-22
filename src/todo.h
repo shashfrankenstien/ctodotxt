@@ -85,4 +85,4 @@ int todoslice_create(TodoArray* t);
 // sorting and filtering
 int todoslice_sort(TodoArray* t, TodoField field);
 int todoslice_sort_desc(TodoArray* t, TodoField field);
-int todoslice_filter(TodoArray* src, const char* pattern);
+int todoslice_search(TodoArray* src, const char* pattern);

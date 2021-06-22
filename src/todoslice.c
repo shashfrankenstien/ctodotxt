@@ -51,7 +51,7 @@ int todoslice_sort_desc(TodoArray* t, TodoField field)
 }
 
 
-int todoslice_filter(TodoArray* t, const char* pattern)
+int todoslice_search(TodoArray* t, const char* pattern)
 {
     clear_slice(t);
 

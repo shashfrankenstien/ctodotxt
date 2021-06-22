@@ -219,7 +219,8 @@ static void print_footer_right(TodoUI* u, const char* fmt, ...)
 static void print_default_footer(TodoUI* u)
 {
     int cur_idx = u->vcpos.line+u->scroll_state;
-    print_footer_left(u, "%s", u->todos->slice[cur_idx]->todo);
+    if (cur_idx < u->todos->n_slice)
+        print_footer_left(u, "%s", u->todos->slice[cur_idx]->todo);
     print_footer_right(u, "%d/%d", cur_idx+1, u->todos->n_slice);
 }
 
@@ -231,7 +232,7 @@ TodoUI todoui_init(TodoArray* t, char* title, char* todopath)
         .todopath = todopath,
         .todos=t,
         .cpos=(struct curpos){1,FOOTER_LINE+1},
-        .vcpos=(struct curpos){0,0},
+        .vcpos=(struct curpos){0,0}, // virtual cursor is 0 indexed
         .minpos=(struct curpos){1,1},
         // .maxpos=(struct curpos){cols,lines},
         .scroll_state = 0
@@ -295,15 +296,28 @@ static int todoui_vc_nav(TodoUI* u, int n)
 }
 
 
+int todoui_vc_up(TodoUI* u, int n)
+{
+    return todoui_vc_nav(u, n*-1);
+}
+
 int todoui_vc_down(TodoUI* u, int n)
 {
     return todoui_vc_nav(u, n);
 }
 
 
-int todoui_vc_up(TodoUI* u, int n)
+int todoui_vc_home(TodoUI* u)
 {
-    return todoui_vc_nav(u, n*-1);
+    int vc_idx = u->vcpos.line + u->scroll_state;
+    return (vc_idx!=0) ? todoui_vc_nav(u, vc_idx*-1) : 0;
+}
+
+
+int todoui_vc_end(TodoUI* u)
+{
+    int vc_idx = u->vcpos.line + u->scroll_state;
+    return (vc_idx != u->todos->n_slice) ? todoui_vc_nav(u, vc_idx) : 0;
 }
 
 

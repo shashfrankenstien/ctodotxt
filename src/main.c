@@ -119,13 +119,70 @@ cmd_var lookup_cmd(char* cmd_str)
 
 
 
+int search_mode(TodoUI* ui)
+{
+    int ch;
+    cmd_str_t cmd = {"", 0};
+    bool done = false;
+
+    while (!done) {
+        ch = read_keypress();
+        switch(ch) {
+            case ENTER:
+                // cmd_clear(&cmd);
+                done = true;
+                break;
+
+            case ESCAPE:
+                cmd_clear(&cmd);
+                done = true;
+                break;
+
+            case BACK_SPACE:
+                putchar('\b');
+                putchar(' ');
+                putchar('\b');
+                if (cmd.len>0)
+                    cmd_pop(&cmd);
+                else
+                    done=true;
+                break;
+
+            case 1 ... 255: // ascii range
+                putchar(ch);
+                cmd_add(&cmd, ch);
+                break;
+
+            default:
+                break;
+        }
+
+        todoui_vc_home(ui); // move virtual cursor to top row to avoid going out of range
+        if (cmd.len > 0 && !done) {
+            todoslice_search(ui->todos, cmd.cmd_str);
+            todoui_draw(ui);
+            printf("/%s", cmd.cmd_str);
+        }
+        else if (ui->todos->n_todos != ui->todos->n_slice || ui->todos->n_slice == 0) {
+            todoslice_create(ui->todos);
+            todoui_draw(ui);
+            if (!done)
+                putchar('/');
+        }
+    }
+    todoui_reset_cursor(ui);
+    console_clear_line();
+    return 0;
+}
+
+
 
 int command_mode(TodoUI* ui)
 {
     int ch;
     cmd_str_t cmd = {"", 0};
-
     bool done = false;
+
     while (!done) {
         ch = read_keypress();
         switch(ch) {
@@ -148,9 +205,12 @@ int command_mode(TodoUI* ui)
                     done=true;
                 break;
 
-            default:
+            case 1 ... 255: // ascii range
                 putchar(ch);
                 cmd_add(&cmd, ch);
+                break;
+
+            default:
                 break;
         }
     }
@@ -158,17 +218,20 @@ int command_mode(TodoUI* ui)
     console_clear_line();
 
     int quit = 0;
-    switch(lookup_cmd(cmd.cmd_str)) {
-        case QUIT:
-            quit = 1;
-            break;
 
-        case SORT:
-            perform_sort_cmd(ui, cmd.cmd_str);
-            break;
+    if (cmd.len > 0) {
+        switch(lookup_cmd(cmd.cmd_str)) {
+            case QUIT:
+                quit = 1;
+                break;
 
-        default:
-            break;
+            case SORT:
+                perform_sort_cmd(ui, cmd.cmd_str);
+                break;
+
+            default:
+                break;
+        }
     }
 
     return quit;
@@ -300,19 +363,6 @@ int main (int argc, char* argv[])
     todoslice_sort(&todos, FINISHED_DATE);
 
     TodoUI ui = todoui_init(&todos, argv[0], "todo.txt");
-
-    // // filter test
-    // {
-    //     printf("\n\n");
-    //     TodoSlice slice = todoarray_filter(&todos, "MDOTS");
-    //     for (int i=0; i<slice.n_todos; i++) {
-    //         Todo* t = slice.todos[i];
-
-    //         printf("%d - %s%s%s%s%s\n", t->tid, COLOR_BOLD, COLOR_YELLOW, COLOR_INVERSE, t->raw_todo, COLOR_RESET);
-    //     }
-    //     todoslice_release(&slice);
-    // }
-
     todoui_draw(&ui);
 
     int ch, n;
@@ -333,6 +383,10 @@ int main (int argc, char* argv[])
                 todoui_reset_cursor(&ui);
                 console_clear_line();
                 cmd_clear(&nav_cmd);
+                if (todos.n_todos!=todos.n_slice) {
+                    todoslice_create(&todos);
+                    todoui_draw(&ui);
+                }
                 // done = true;
                 break;
 
@@ -359,6 +413,13 @@ int main (int argc, char* argv[])
             case ':':
                 putchar(ch);
                 cmd_res = command_mode(&ui);
+                if (cmd_res!=0)
+                    done = true;
+                break;
+
+            case '/':
+                putchar(ch);
+                cmd_res = search_mode(&ui);
                 if (cmd_res!=0)
                     done = true;
                 break;
