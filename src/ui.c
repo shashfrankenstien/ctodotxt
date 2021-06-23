@@ -265,6 +265,9 @@ int todoui_draw(TodoUI* u)
 
 static int todoui_vc_nav(TodoUI* u, int n)
 {
+    if (u->todos->n_slice==0)
+        return -1;
+
     int orig_scroll = u->scroll_state;
     int orig_todo_idx = u->vcpos.line + u->scroll_state;
 

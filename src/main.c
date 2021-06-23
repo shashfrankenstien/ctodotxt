@@ -42,13 +42,13 @@ typedef enum {
 } cmd_var;
 
 
-typedef struct {
+struct cmd_lookup_t {
     char* cmd_str;
     cmd_var cmd;
-} cmd_lookup_t;
+};
 
 
-static cmd_lookup_t cmd_lookup_table[] = {
+static struct cmd_lookup_t cmd_lookup_table[] = {
     {"q", QUIT},
     {"quit", QUIT},
     {"w", WRITE},
@@ -60,12 +60,14 @@ static cmd_lookup_t cmd_lookup_table[] = {
     {"filter", FILTER},
 };
 
-#define NCMDS (sizeof(cmd_lookup_table)/sizeof(cmd_lookup_t))
+#define NCMDS (sizeof(cmd_lookup_table)/sizeof(struct cmd_lookup_t))
 
 cmd_var lookup_cmd(char* cmd_str);
-int command_mode(TodoUI* ui);
 void perform_sort_cmd(TodoUI* ui, char* cmd_str);
 
+
+typedef int (*command_cb_t) (TodoUI*, cmd_str_t*);
+int command_mode(TodoUI* ui, command_cb_t step_cb, command_cb_t final_cb);
 
 
 // impl
@@ -119,123 +121,6 @@ cmd_var lookup_cmd(char* cmd_str)
 
 
 
-int search_mode(TodoUI* ui)
-{
-    int ch;
-    cmd_str_t cmd = {"", 0};
-    bool done = false;
-
-    while (!done) {
-        ch = read_keypress();
-        switch(ch) {
-            case ENTER:
-                // cmd_clear(&cmd);
-                done = true;
-                break;
-
-            case ESCAPE:
-                cmd_clear(&cmd);
-                done = true;
-                break;
-
-            case BACK_SPACE:
-                putchar('\b');
-                putchar(' ');
-                putchar('\b');
-                if (cmd.len>0)
-                    cmd_pop(&cmd);
-                else
-                    done=true;
-                break;
-
-            case 1 ... 255: // ascii range
-                putchar(ch);
-                cmd_add(&cmd, ch);
-                break;
-
-            default:
-                break;
-        }
-
-        todoui_vc_home(ui); // move virtual cursor to top row to avoid going out of range
-        if (cmd.len > 0 && !done) {
-            todoslice_search(ui->todos, cmd.cmd_str);
-            todoui_draw(ui);
-            printf("/%s", cmd.cmd_str);
-        }
-        else if (ui->todos->n_todos != ui->todos->n_slice || ui->todos->n_slice == 0) {
-            todoslice_create(ui->todos);
-            todoui_draw(ui);
-            if (!done)
-                putchar('/');
-        }
-    }
-    todoui_reset_cursor(ui);
-    console_clear_line();
-    return 0;
-}
-
-
-
-int command_mode(TodoUI* ui)
-{
-    int ch;
-    cmd_str_t cmd = {"", 0};
-    bool done = false;
-
-    while (!done) {
-        ch = read_keypress();
-        switch(ch) {
-            case ENTER:
-                done = true;
-                break;
-
-            case ESCAPE:
-                cmd_clear(&cmd);
-                done = true;
-                break;
-
-            case BACK_SPACE:
-                putchar('\b');
-                putchar(' ');
-                putchar('\b');
-                if (cmd.len>0)
-                    cmd_pop(&cmd);
-                else
-                    done=true;
-                break;
-
-            case 1 ... 255: // ascii range
-                putchar(ch);
-                cmd_add(&cmd, ch);
-                break;
-
-            default:
-                break;
-        }
-    }
-    todoui_reset_cursor(ui);
-    console_clear_line();
-
-    int quit = 0;
-
-    if (cmd.len > 0) {
-        switch(lookup_cmd(cmd.cmd_str)) {
-            case QUIT:
-                quit = 1;
-                break;
-
-            case SORT:
-                perform_sort_cmd(ui, cmd.cmd_str);
-                break;
-
-            default:
-                break;
-        }
-    }
-
-    return quit;
-}
 
 
 static void inner_sort_by_char(TodoUI* ui, char cmd_char)
@@ -294,6 +179,106 @@ void perform_sort_cmd(TodoUI* ui, char* cmd_str)
             inner_sort_by_char(ui, ch);
         }
     }
+}
+
+
+
+int general_command_cb(TodoUI* ui, cmd_str_t* cmd)
+{
+    int ret = 0;
+    if (cmd->len > 0) {
+        switch(lookup_cmd(cmd->cmd_str)) {
+            case QUIT:
+                ret = 1;
+                break;
+
+            case SORT:
+                perform_sort_cmd(ui, cmd->cmd_str);
+                break;
+
+            default:
+                break;
+        }
+    }
+    return ret;
+}
+
+
+
+int search_command_cb(TodoUI* ui, cmd_str_t* cmd)
+{
+    bool should_reset = true;
+
+    // move virtual cursor to top row to avoid going out of range
+    todoui_vc_home(ui);
+    if (cmd->len > 0) {
+        todoslice_search(ui->todos, cmd->cmd_str);
+
+        if (ui->todos->n_slice > 0) {
+            todoui_draw(ui);
+            should_reset = false;
+        }
+    }
+
+    // only reset if slice is different from actual array because speeeeeed!!!
+    if (should_reset && (ui->todos->n_todos-ui->todos->n_slice)!=0) {
+        todoslice_create(ui->todos);
+        todoui_draw(ui);
+    }
+
+    return 0;
+}
+
+
+
+int command_mode(TodoUI* ui, command_cb_t step_cb, command_cb_t final_cb)
+{
+    int ch;
+    cmd_str_t cmd = {"", 0};
+    bool done = false;
+
+    while (!done) {
+        ch = read_keypress();
+        switch(ch) {
+            case ENTER:
+                done = true;
+                break;
+
+            case ESCAPE:
+                cmd_clear(&cmd);
+                done = true;
+                break;
+
+            case BACK_SPACE:
+                putchar('\b');
+                putchar(' ');
+                putchar('\b');
+                if (cmd.len>0)
+                    cmd_pop(&cmd);
+                else
+                    done=true;
+                break;
+
+            case 1 ... 255: // ascii range
+                putchar(ch);
+                cmd_add(&cmd, ch);
+                break;
+
+            default:
+                break;
+        }
+        if (step_cb)
+            step_cb(ui, &cmd);
+    }
+    todoui_reset_cursor(ui);
+    console_clear_line();
+
+    int quit = 0;
+
+    if (final_cb)
+        quit = final_cb(ui, &cmd);
+
+    return quit;
 }
 
 
@@ -359,8 +344,6 @@ int main (int argc, char* argv[])
 
     // default sort
     todoslice_create(&todos);
-    todoslice_sort(&todos, PRIORITY);
-    todoslice_sort(&todos, FINISHED_DATE);
 
     TodoUI ui = todoui_init(&todos, argv[0], "todo.txt");
     todoui_draw(&ui);
@@ -412,14 +395,14 @@ int main (int argc, char* argv[])
 
             case ':':
                 putchar(ch);
-                cmd_res = command_mode(&ui);
+                cmd_res = command_mode(&ui, NULL, general_command_cb);
                 if (cmd_res!=0)
                     done = true;
                 break;
 
             case '/':
                 putchar(ch);
-                cmd_res = search_mode(&ui);
+                cmd_res = command_mode(&ui, NULL, search_command_cb);
                 if (cmd_res!=0)
                     done = true;
                 break;

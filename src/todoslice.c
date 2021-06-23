@@ -16,10 +16,7 @@ static int slice_cmp_desc(const void* _t, const void* _oth, void* _field)
     return todo_cmp_desc(*(Todo**)_t, *(Todo**)_oth, _field);
 }
 
-
-
-
-void clear_slice(TodoArray* t)
+static void clear_slice(TodoArray* t)
 {
     if (t->slice)
         free(t->slice);
@@ -28,12 +25,17 @@ void clear_slice(TodoArray* t)
     t->n_slice = 0;
 }
 
+
+
 int todoslice_create(TodoArray* t)
 {
     clear_slice(t);
     for (int i=0; i<t->n_todos; i++) {
         t->slice[t->n_slice++] = &t->todos[i];
     }
+    // apply default sorting
+    todoslice_sort(t, PRIORITY);
+    todoslice_sort(t, FINISHED_DATE);
     return 0;
 }
 
