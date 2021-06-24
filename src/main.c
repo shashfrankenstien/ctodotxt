@@ -70,7 +70,7 @@ typedef int (*command_cb_t) (TodoUI*, cmd_str_t*);
 int command_mode(TodoUI* ui, command_cb_t step_cb, command_cb_t final_cb);
 
 
-// impl
+// impl cmd
 
 void cmd_add(cmd_str_t* m, char c)
 {
@@ -121,7 +121,7 @@ cmd_var lookup_cmd(char* cmd_str)
 
 
 
-
+// impl functionality
 
 static void inner_sort_by_char(TodoUI* ui, char cmd_char)
 {
@@ -183,12 +183,38 @@ void perform_sort_cmd(TodoUI* ui, char* cmd_str)
 
 
 
+void write_to_file_cmd(TodoArray* t, const char* filename)
+{
+    FILE* fp = fopen(filename, "w");
+    if (fp == NULL)
+        return;
+
+    for (int i=0; i<t->n_todos; i++) {
+        char buffer[MAX_LINE_LENGTH] = {0};
+        todo_rebuild(&t->todos[i], buffer);
+        fputs(buffer, fp);
+        fputc('\n', fp);
+    }
+
+    fclose(fp);
+}
+
+
 int general_command_cb(TodoUI* ui, cmd_str_t* cmd)
 {
     int ret = 0;
     if (cmd->len > 0) {
         switch(lookup_cmd(cmd->cmd_str)) {
+            case WRITE:
+                write_to_file_cmd(ui->todos, "test.txt");
+                break;
+
             case QUIT:
+                ret = 1;
+                break;
+
+            case WRITE_QUIT:
+                write_to_file_cmd(ui->todos, "test.txt");
                 ret = 1;
                 break;
 

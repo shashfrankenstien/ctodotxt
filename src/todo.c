@@ -121,7 +121,6 @@ int todo_parse(Todo* t, char* line)
         }
         else if (due_match > -1) {
             read_todo_date(&token[4], &t->due_date);
-            // strptime((const char*)token, DUEDATE_FMT, &t->due_date);
         }
         else {
             int len = strlen(token);
@@ -146,7 +145,9 @@ int todo_parse(Todo* t, char* line)
         token = strtok(NULL, sep);
     }
 
-    strncpy(t->todo, todo, MAX_LINE_LENGTH);
+    int len = strlen(todo);
+    todo[len-1] = '\0'; // strip extra space at the end
+    strncpy(t->todo, todo, len);
     return 0;
 }
 
@@ -187,17 +188,16 @@ int todo_rebuild(Todo* t, char* out)
     buf_idx += CAP_LENGTH(strlen(t->todo));
 
     if (t->due_date.tm_year != 0) {
-        strncat(&buffer[buf_idx], "due:", 5);
-        buf_idx += 4;
+        strncat(&buffer[buf_idx], " due:", 6);
+        buf_idx += 5;
         res = strftime(&buffer[buf_idx], 11, DATE_FMT, &t->due_date); // writes '\0' at the end
         if (res > 0) {
             buf_idx += res;
-            buffer[buf_idx++] = ' ';
         }
     }
 
     if (t->finished == true && t->priority != NO_PRIORITY) {
-        snprintf(&buffer[buf_idx], 7, "pri:%c ", t->priority);
+        snprintf(&buffer[buf_idx], 7, " pri:%c", t->priority);
         buf_idx += 6;
     }
 
