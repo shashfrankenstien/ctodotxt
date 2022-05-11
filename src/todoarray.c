@@ -14,14 +14,14 @@ TodoArray todoarray_init()
     t.todos = calloc(ARRAY_ALLOC_SIZE, sizeof(Todo));
     t.n_todos = 0;
 
-    t.slice = NULL;
-    t.n_slice = 0;
+    t.view = NULL;
+    t.n_view = 0;
     return t;
 }
 
 int todoarray_release(TodoArray* t)
 {
-    free(t->slice);
+    free(t->view);
     free(t->todos);
     return 0;
 }

@@ -67,9 +67,9 @@ typedef struct {
     Todo* todos;
     int n_todos;
 
-    // slice contains pointers to TodoArray elements
-    Todo** slice;
-    int n_slice;
+    // view contains pointers to TodoArray elements
+    Todo** view;
+    int n_view;
 } TodoArray;
 
 
@@ -80,9 +80,9 @@ int todoarray_add(TodoArray* t, char* line);
 void todoarray_add_cb(void* obj, char* line);
 
 
-// slice operations
-int todoslice_create(TodoArray* t);
+// view operations
+int todoview_create(TodoArray* t);
 // sorting and filtering
-int todoslice_sort(TodoArray* t, TodoField field);
-int todoslice_sort_desc(TodoArray* t, TodoField field);
-int todoslice_search(TodoArray* src, const char* pattern);
+int todoview_sort(TodoArray* t, TodoField field);
+int todoview_sort_desc(TodoArray* t, TodoField field);
+int todoview_search(TodoArray* src, const char* pattern);

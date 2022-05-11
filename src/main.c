@@ -127,27 +127,27 @@ static void inner_sort_by_char(TodoUI* ui, char cmd_char)
 {
     switch(cmd_char) {
         case 'f':
-            todoslice_sort(ui->todos, FINISHED_DATE);
+            todoview_sort(ui->todos, FINISHED_DATE);
             todoui_draw(ui);
             break;
 
         case 'c':
-            todoslice_sort(ui->todos, CREATED_DATE);
+            todoview_sort(ui->todos, CREATED_DATE);
             todoui_draw(ui);
             break;
 
         case 'p':
-            todoslice_sort(ui->todos, PRIORITY);
+            todoview_sort(ui->todos, PRIORITY);
             todoui_draw(ui);
             break;
 
         case 'd':
-            todoslice_sort(ui->todos, DUE_DATE);
+            todoview_sort(ui->todos, DUE_DATE);
             todoui_draw(ui);
             break;
 
         case 'i':
-            todoslice_sort(ui->todos, ID);
+            todoview_sort(ui->todos, ID);
             todoui_draw(ui);
             break;
     }
@@ -238,17 +238,17 @@ int search_command_cb(TodoUI* ui, cmd_str_t* cmd)
     // move virtual cursor to top row to avoid going out of range
     todoui_vc_home(ui);
     if (cmd->len > 0) {
-        todoslice_search(ui->todos, cmd->cmd_str);
+        todoview_search(ui->todos, cmd->cmd_str);
 
-        if (ui->todos->n_slice > 0) {
+        if (ui->todos->n_view > 0) {
             todoui_draw(ui);
             should_reset = false;
         }
     }
 
-    // only reset if slice is different from actual array because speeeeeed!!!
-    if (should_reset && (ui->todos->n_todos-ui->todos->n_slice)!=0) {
-        todoslice_create(ui->todos);
+    // only reset if view is different from actual array because speeeeeed!!!
+    if (should_reset && (ui->todos->n_todos-ui->todos->n_view)!=0) {
+        todoview_create(ui->todos);
         todoui_draw(ui);
     }
 
@@ -369,7 +369,7 @@ int main (int argc, char* argv[])
     }
 
     // default sort
-    todoslice_create(&todos);
+    todoview_create(&todos);
 
     TodoUI ui = todoui_init(&todos, argv[0], "todo.txt");
     todoui_draw(&ui);
@@ -392,8 +392,8 @@ int main (int argc, char* argv[])
                 todoui_reset_cursor(&ui);
                 console_clear_line();
                 cmd_clear(&nav_cmd);
-                if (todos.n_todos!=todos.n_slice) {
-                    todoslice_create(&todos);
+                if (todos.n_todos!=todos.n_view) {
+                    todoview_create(&todos);
                     todoui_draw(&ui);
                 }
                 // done = true;

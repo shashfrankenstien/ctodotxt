@@ -6,60 +6,60 @@
 #include "todo.h"
 
 
-static int slice_cmp_asc(const void* _t, const void* _oth, void* _field)
+static int view_cmp_asc(const void* _t, const void* _oth, void* _field)
 {
     return todo_cmp_asc(*(Todo**)_t, *(Todo**)_oth, _field);
 }
 
-static int slice_cmp_desc(const void* _t, const void* _oth, void* _field)
+static int view_cmp_desc(const void* _t, const void* _oth, void* _field)
 {
     return todo_cmp_desc(*(Todo**)_t, *(Todo**)_oth, _field);
 }
 
-static void clear_slice(TodoArray* t)
+static void clear_view(TodoArray* t)
 {
-    if (t->slice)
-        free(t->slice);
+    if (t->view)
+        free(t->view);
 
-    t->slice = calloc(t->n_todos, sizeof(Todo*));
-    t->n_slice = 0;
+    t->view = calloc(t->n_todos, sizeof(Todo*));
+    t->n_view = 0;
 }
 
 
 
-int todoslice_create(TodoArray* t)
+int todoview_create(TodoArray* t)
 {
-    clear_slice(t);
+    clear_view(t);
     for (int i=0; i<t->n_todos; i++) {
-        t->slice[t->n_slice++] = &t->todos[i];
+        t->view[t->n_view++] = &t->todos[i];
     }
     // apply default sorting
-    todoslice_sort(t, PRIORITY);
-    todoslice_sort(t, FINISHED_DATE);
+    todoview_sort(t, PRIORITY);
+    todoview_sort(t, FINISHED_DATE);
     return 0;
 }
 
 
-int todoslice_sort(TodoArray* t, TodoField field)
+int todoview_sort(TodoArray* t, TodoField field)
 {
-    msort_r(t->slice, t->n_slice, sizeof(Todo*), slice_cmp_asc, &field);
+    msort_r(t->view, t->n_view, sizeof(Todo*), view_cmp_asc, &field);
     return 0;
 }
 
-int todoslice_sort_desc(TodoArray* t, TodoField field)
+int todoview_sort_desc(TodoArray* t, TodoField field)
 {
-    msort_r(t->slice, t->n_slice, sizeof(Todo*), slice_cmp_desc, &field);
+    msort_r(t->view, t->n_view, sizeof(Todo*), view_cmp_desc, &field);
     return 0;
 }
 
 
-int todoslice_search(TodoArray* t, const char* pattern)
+int todoview_search(TodoArray* t, const char* pattern)
 {
-    clear_slice(t);
+    clear_view(t);
 
     for (int i=0; i<t->n_todos; i++) {
         if (todo_match(&t->todos[i], pattern)) {
-            t->slice[t->n_slice++] = &t->todos[i];
+            t->view[t->n_view++] = &t->todos[i];
         }
     }
     return 0;

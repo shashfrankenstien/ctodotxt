@@ -73,7 +73,7 @@ static void fmt_due_date(char* buf, const int size, struct tm* dt) {
 static void print_todo(TodoUI* u, int todo_idx)
 {
     console_clear_line();
-    Todo* t = u->todos->slice[todo_idx];
+    Todo* t = u->todos->view[todo_idx];
 
     const char* color_cd;
     switch(t->priority) {
@@ -219,9 +219,9 @@ static void print_footer_right(TodoUI* u, const char* fmt, ...)
 static void print_default_footer(TodoUI* u)
 {
     int cur_idx = u->vcpos.line+u->scroll_state;
-    if (cur_idx < u->todos->n_slice)
-        print_footer_left(u, "%s", u->todos->slice[cur_idx]->todo);
-    print_footer_right(u, "%d/%d", cur_idx+1, u->todos->n_slice);
+    if (cur_idx < u->todos->n_view)
+        print_footer_left(u, "%s", u->todos->view[cur_idx]->todo);
+    print_footer_right(u, "%d/%d", cur_idx+1, u->todos->n_view);
 }
 
 
@@ -252,7 +252,7 @@ int todoui_draw(TodoUI* u)
     print_columns_names(u);
     cursor_position(TOP_OFFSET, u->minpos.col);
 
-    for (int i=u->scroll_state; i<MIN(u->todos->n_slice, PAGE_SIZE+u->scroll_state); i++) {
+    for (int i=u->scroll_state; i<MIN(u->todos->n_view, PAGE_SIZE+u->scroll_state); i++) {
         print_todo(u, i);
     }
 
@@ -265,14 +265,14 @@ int todoui_draw(TodoUI* u)
 
 static int todoui_vc_nav(TodoUI* u, int n)
 {
-    if (u->todos->n_slice==0)
+    if (u->todos->n_view==0)
         return -1;
 
     int orig_scroll = u->scroll_state;
     int orig_todo_idx = u->vcpos.line + u->scroll_state;
 
-    int new_todo_idx = MAX(MIN(orig_todo_idx + n, u->todos->n_slice-1), 0);
-    int new_vpos = MAX(MIN(u->vcpos.line + n, MIN(PAGE_SIZE-1, u->todos->n_slice-1)), 0);
+    int new_todo_idx = MAX(MIN(orig_todo_idx + n, u->todos->n_view-1), 0);
+    int new_vpos = MAX(MIN(u->vcpos.line + n, MIN(PAGE_SIZE-1, u->todos->n_view-1)), 0);
     int new_scroll = MAX(new_todo_idx - new_vpos, 0);
 
     if (new_scroll > orig_scroll) { // gotta scroll down and set vpos to PAGE_SIZE
@@ -320,7 +320,7 @@ int todoui_vc_home(TodoUI* u)
 int todoui_vc_end(TodoUI* u)
 {
     int vc_idx = u->vcpos.line + u->scroll_state;
-    return (vc_idx != u->todos->n_slice) ? todoui_vc_nav(u, vc_idx) : 0;
+    return (vc_idx != u->todos->n_view) ? todoui_vc_nav(u, vc_idx) : 0;
 }
 
 
